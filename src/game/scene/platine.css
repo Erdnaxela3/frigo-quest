@@ -1,0 +1,68 @@
+.pt-wrap { position: relative; width: 100%; aspect-ratio: 1200 / 900; user-select: none; }
+.pt-bg, .pt-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Own layer: the expensive grain filter must not repaint when fans spin or targets glow. */
+.pt-bg { will-change: transform; }
+
+.pt-target { cursor: pointer; outline: none; }
+.pt-target:hover, .pt-target:focus-visible { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px var(--copper-2)); }
+.pt-target:focus-visible { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px var(--lp)); }
+.pt-wrap[data-tool] .pt-target { cursor: crosshair; }
+.pt-hl { animation: pt-pulse 1.1s ease-in-out infinite; }
+@keyframes pt-pulse {
+  0%, 100% { filter: drop-shadow(0 0 1px #fde047); }
+  50% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #facc15); }
+}
+
+.pt-pipe path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pt-pipe-sh { stroke: #2a1806; stroke-opacity: .35; }
+.pt-pipe-cu { stroke: var(--copper); }
+.pt-pipe-hl { stroke: var(--copper-2); stroke-opacity: .85; }
+.pt-core { stroke-linecap: butt !important; }
+.st-liquid .pt-core { stroke: var(--liquid); }
+.st-vapour .pt-core { stroke: var(--vapour); }
+.st-twoPhase .pt-core { stroke: var(--vapour); }
+.st-twoPhase .pt-core2 { stroke: var(--liquid); stroke-dasharray: 7 7; stroke-linecap: butt !important; }
+.st-n2 .pt-core { stroke: #8b939b; stroke-dasharray: 5 4; }
+.st-vacuum .pt-core { stroke: #15181c; }
+.pt-flow { stroke: #fff; stroke-opacity: .75; stroke-dasharray: 1 16; animation: pt-flow .9s linear infinite; }
+@keyframes pt-flow { from { stroke-dashoffset: 17; } to { stroke-dashoffset: 0; } }
+
+.pt-arrow { fill: none; stroke: #2a1806; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+.pt-capillary { fill: none; stroke: var(--copper); stroke-width: 1.8; }
+.pt-cable { fill: none; stroke: #2d3135; stroke-width: 4; stroke-linejoin: round; stroke-opacity: .85; }
+.pt-cable.thin { stroke-width: 2.5; }
+.pt-divider { stroke: #5a3d1c; stroke-opacity: .55; stroke-width: 1.5; stroke-dasharray: 10 6; }
+
+.pt-plate rect { fill: #1b1c1e; stroke: #000; stroke-width: .6; }
+.pt-plate text { fill: #f2efe6; font-family: var(--font); font-weight: 600; letter-spacing: .06em; }
+.pt-title text { font: 700 15px var(--font); letter-spacing: .12em; fill: #4a370c; }
+.pt-zone { font: 800 15px var(--font); letter-spacing: .3em; fill: #5a3d1c; fill-opacity: .8; }
+.pt-tiny { font-family: var(--font); font-size: 6.5px; fill: #222; }
+.pt-engrave { fill: #4a3218; fill-opacity: .85; font-weight: 600; letter-spacing: .05em; }
+.pt-lcd { font-family: var(--mono); fill: #1c2a1a; }
+
+.pt-guard circle, .pt-guard line { fill: none; stroke: #b4bbc1; stroke-width: 1.2; }
+.pt-blades { transform-box: fill-box; transform-origin: center; }
+.pt-fan.on .pt-blades { animation: pt-spin .35s linear infinite; }
+@keyframes pt-spin { to { transform: rotate(360deg); } }
+
+.pt-lamp { filter: drop-shadow(0 0 4px #4ade80); }
+
+.pt-frost-seg { fill: none; stroke: var(--frost); stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: .7; stroke-dasharray: 2 2.5; }
+.pt-frost-box { fill: url(#pt-frostpat); stroke: #fff; stroke-opacity: .6; stroke-width: 1.5; }
+
+.pt-hose path { fill: none; stroke-linecap: round; }
+.pt-hose-sh { stroke: #000; stroke-opacity: .3; stroke-width: 9; }
+.pt-hose-body { stroke-width: 7; }
+.pt-hose-hl { stroke: #fff; stroke-opacity: .3; stroke-width: 1.6; }
+.h-blue .pt-hose-body, .pt-coupler.h-blue { stroke: var(--lp); }
+.h-red .pt-hose-body, .pt-coupler.h-red { stroke: var(--hp); }
+.h-yellow .pt-hose-body, .pt-coupler.h-yellow { stroke: var(--service); }
+.pt-coupler { stroke-width: 1; fill: #2a2d30; }
+.pt-coupler.h-blue { fill: var(--lp); stroke: #1e3a8a; }
+.pt-coupler.h-red { fill: var(--hp); stroke: #7f1d1d; }
+.pt-coupler.h-yellow { fill: var(--service); stroke: #713f12; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-fan.on .pt-blades, .pt-flow, .pt-hl { animation-duration: 3s; }
+}
