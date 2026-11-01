@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { boxStep, kpCutIn, kpCutOut, pressostatAllows, relax, standstillPressure, steadyState } from './cycle';
-import { psat } from './refrigerants';
+import { psat, toRel } from './refrigerants';
 import { NO_FAULTS, type CycleInput, type Faults, type Pressostat } from './types';
 
 const base: CycleInput = { fluid: 'R32', Tamb: 30, Troom: 25, txvSH: 5, faults: NO_FAULTS, dTevapNominal: 15, dTcondNominal: 12 };
@@ -175,5 +175,50 @@ describe('controls', () => {
     expect(W).toBeGreaterThan(2);
     expect(W).toBeLessThan(30);
     expect(Number.isFinite(boxStep(5, true, 2, 1e6, opts))).toBe(true);
+  });
+});
+
+describe('pressure regulators', () => {
+  const cold: CycleInput = { fluid: 'R449A', Tamb: 30, Troom: 6, txvSH: 5, faults: NO_FAULTS };
+
+  it('KVP holds the evaporator at its floor, capacity drops, suction stays lower', () => {
+    const free = steadyState(cold), floor = psat('R449A', 0, 'dew');
+    const o = steadyState({ ...cold, evapPressureFloor: floor });
+    expect(free.BP).toBeLessThan(floor);
+    expect(o.BP).toBeCloseTo(floor, 5);
+    expect(o.Tevap).toBeCloseTo(0, 1);
+    expect(o.BPsuction).toBeCloseTo(free.BP, 1);
+    expect(o.capacityKW).toBeLessThan(free.capacityKW);
+    expect(steadyState({ ...cold, evapPressureFloor: 1 }).BP).toBeCloseTo(free.BP, 5); // floor below: no effect
+  });
+
+  it('winter without KVR: low HP, TXV starves (high SH)', () => {
+    const summer = steadyState({ ...cold, Troom: 2 }), w = steadyState({ ...cold, Troom: 2, Tamb: -5 });
+    expect(w.HP).toBeLessThan(summer.HP - 8);
+    expect(w.SH).toBeGreaterThan(summer.SH + 6);
+    expect(w.BP).toBeLessThan(summer.BP);
+  });
+
+  it('winter with KVR at Psat(25 °C): HP held, SH normal; set too high costs COP', () => {
+    const floor = psat('R449A', 25, 'bubble');
+    const w = steadyState({ ...cold, Troom: 2, Tamb: -5, condPressureFloor: floor });
+    const starved = steadyState({ ...cold, Troom: 2, Tamb: -5 });
+    expect(w.HP).toBeGreaterThanOrEqual(floor - 1e-9);
+    expect(Math.abs(w.SH - 7)).toBeLessThan(1);
+    expect(w.capacityKW).toBeGreaterThan(starved.capacityKW);
+    const high = steadyState({ ...cold, Troom: 2, Tamb: -5, condPressureFloor: psat('R449A', 38, 'bubble') });
+    expect(high.COP).toBeLessThan(w.COP - 0.5);
+    expect(high.current).toBeGreaterThan(w.current);
+    // summer: the KVR is wide open
+    expect(steadyState({ ...cold, Troom: 2, condPressureFloor: floor }).HP).toBeCloseTo(steadyState({ ...cold, Troom: 2 }).HP, 5);
+  });
+
+  it('R290 nominal point plausible', () => {
+    const o = steadyState({ ...base, fluid: 'R290' });
+    expect(toRel(o.BP)).toBeGreaterThan(4);
+    expect(toRel(o.BP)).toBeLessThan(6.5);
+    expect(toRel(o.HP)).toBeGreaterThan(11);
+    expect(toRel(o.HP)).toBeLessThan(15);
+    expect(Math.abs(o.SH - 7)).toBeLessThan(2);
   });
 });

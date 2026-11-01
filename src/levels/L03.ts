@@ -1,6 +1,6 @@
 import { flow } from '../physics/circuit';
 import { P_ATM, toRel } from '../physics/refrigerants';
-import { P, gaugeP, gasMass, hoseAt, hoseVol, makePlatine } from '../game/platineModel';
+import { P, SYSTEM_IDS, gaugeP, gasMass, makePlatine } from '../game/platineModel';
 import { fmt, refuse } from '../game/engine';
 import type { JointId, TargetId } from '../game/sceneIds';
 import type { GameState, Level, Socket, Step, Tier } from '../game/types';
@@ -53,7 +53,7 @@ const L03: Level = {
   setup(tier: Tier, rng) {
     const T0 = tier === 'examen' ? Math.round(16 + 8 * rng()) : 20;
     const s = makePlatine({ levelId: 'L03', tier, charge: 0, Tamb: T0, bench: { n2: { open: false, setpoint: P_ATM } } });
-    for (const id of ['hp', 'liq', 'lp', 'comp']) {
+    for (const id of SYSTEM_IDS) {
       const v = s.circuit.volumes[id];
       v.mAir = gasMass(P_ATM, v.V, 'air', T0);
     }
@@ -107,17 +107,7 @@ const L03: Level = {
 
   onTick(s, dt) {
     s.circuit.ambient = s.plant.Tamb = ambient(s);
-    const n2 = s.bench.n2!, h = hoseAt(s, 'n2');
-    if (h) {
-      // relieving regulator: lowering the setpoint bleeds the outlet down to it
-      // simplification: instant relief of the hose gas (N₂/air only); the manifold link sets the bleed rate
-      const v = s.circuit.volumes[hoseVol(h)], Pv = P(s, hoseVol(h));
-      if (Pv > n2.setpoint) {
-        const f = 1 - n2.setpoint / Pv;
-        s.circuit.emitted.n2 += v.mN2 * f; s.circuit.emitted.air += v.mAir * f;
-        v.mN2 *= 1 - f; v.mAir *= 1 - f;
-      }
-    }
+    const n2 = s.bench.n2!;
     const r = circuitRel(s);
     if (r >= 4 && toRel(n2.setpoint) <= 11) s.vars.palier = true;
     if (r >= STRENGTH - 1) s.vars.strengthHold = (num(s, 'strengthHold') || 0) + dt;

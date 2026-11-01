@@ -2,17 +2,27 @@ import { useRef, useState } from 'react';
 import { exportProgress, importProgress, mastery, resetProgress, setExamDate, useProgress } from './store';
 import { SKILLS, SKILL_BY_ID, SKILL_GROUPS, type Skill } from '../learn/skills';
 import { CARDS, LESSONS } from '../learn/content';
+import { LEVELS as LEVEL_DEFS } from '../levels';
+import type { ProgressEvent } from './store';
 import './dashboard.css';
 
-// Hardcoded until the level registry exists.
-const LEVELS: [string, string][] = [
-  ['L00', 'Labo des gaz'],
-  ['L01', 'Raccorder le manifold et lire l\'installation'],
-  ['L02', 'Contrôle d\'étanchéité périodique'],
-  ['L03', 'Test de pression à l\'azote'],
-  ['L04', 'Tirage au vide'],
-  ['L05', 'Récupération du fluide'],
-];
+const LEVELS: [string, string][] = LEVEL_DEFS.map((l) => [l.id, l.title]);
+
+/** Top recurring mistakes across level runs, labelled with the rule message. */
+function recurringMistakes(events: ProgressEvent[], n = 5) {
+  const count = new Map<string, number>();
+  for (const e of events) {
+    const d = e.detail as { level?: string; mistakes?: unknown } | undefined;
+    if (e.kind !== 'level' || !d?.level || !Array.isArray(d.mistakes)) continue;
+    for (const id of d.mistakes) count.set(`${d.level}:${id}`, (count.get(`${d.level}:${id}`) ?? 0) + 1);
+  }
+  return [...count].sort((a, b) => b[1] - a[1]).slice(0, n).map(([key, times]) => {
+    const [level, id] = key.split(':');
+    const def = LEVEL_DEFS.find((l) => l.id === level);
+    const rule = def?.rules.find((r) => r.id === id);
+    return { level, id, times, message: rule?.message ?? id, lesson: rule?.lesson ?? def?.lesson };
+  });
+}
 
 const DAY = 86_400_000;
 const pct = (x: number) => `${Math.round(x * 100)} %`;
@@ -51,7 +61,8 @@ export default function Dashboard() {
 
   const tSkills = SKILLS.filter((s) => s.type === 'T' && s.id.startsWith('A1:') && Number(s.group) <= 11);
   const tMean = tSkills.reduce((sum, s) => sum + (m[s.id] ?? 0), 0) / tSkills.length;
-  const levelsDone = LEVELS.slice(1).every(([id]) => progress.levels[id]?.completed);
+  const mistakes = recurringMistakes(progress.events);
+  const levelsDone = LEVELS.filter(([id]) => id <= 'L05').every(([id]) => progress.levels[id]?.completed);
   const milestones: [string, boolean | null, string?][] = [
     ['Tronc commun théorie ≥ 80 %', tMean >= 0.8, pct(tMean)],
     ['Procédures L01 à L05 terminées', levelsDone],
@@ -158,8 +169,29 @@ export default function Dashboard() {
         </section>
 
         <section className="card">
+          <h2>Erreurs récurrentes</h2>
+          {mistakes.length === 0 ? (
+            <p className="muted">Aucune erreur enregistrée dans les niveaux pour l'instant.</p>
+          ) : (
+            <ul className="dash-list">
+              {mistakes.map((x) => (
+                <li key={`${x.level}:${x.id}`}>
+                  <span className="mono muted">{x.level}</span>
+                  <span className="grow">{x.message}<span className="muted"> · ×{x.times}</span></span>
+                  {x.lesson && <a className="btn" href={`#/lecons/${x.lesson}`}>Leçon</a>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="card">
           <h2>Niveaux</h2>
           <ul className="dash-list">
+            <li>
+              <span className="mono muted">L00</span>
+              <a className="grow" href="#/labo">Labo des gaz</a>
+            </li>
             {LEVELS.map(([id, title]) => {
               const r = progress.levels[id];
               const stars = r?.stars ?? 0;

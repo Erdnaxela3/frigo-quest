@@ -5,13 +5,14 @@ import VacuumGauge from './instruments/VacuumGauge';
 import Scale from './instruments/Scale';
 import Readout from './instruments/Readout';
 import Toolbox, { toolLabel } from './Toolbox';
-import { TARGET_LABELS, type TargetId, type ThreeWay } from './sceneIds';
-import type { Action, GameState, Level, Socket, Tier } from './types';
+import Panel from './panels/Panels';
+import { TARGET_LABELS, type TargetId } from './sceneIds';
+import type { Action, GameState, Level, ManifoldValve, Socket, Tier } from './types';
 import {
   SEVERITY_LABEL, SOCKET_LABELS, TIERS, answersFor, clickAction, currentObjective, dispatch, emittedG, fmt, fmtTime, highlight,
-  hoseName, objectivesFor, readings, scaleGross, socketAction, tick,
+  hoseName, objectivesFor, readings, scaleGross, socketAction, tick, type PanelId,
 } from './engine';
-import { gaugeP, sceneView, vs } from './platineModel';
+import { concentration, gasDetector, gasReading, gaugeP, sceneView, vs } from './platineModel';
 import { getLevel } from '../levels';
 import { FLUID_IDS, toAbs, toRel } from '../physics/refrigerants';
 import type { FluidId } from '../physics/types';
@@ -51,14 +52,11 @@ function Briefing({ level }: { level: Level }) {
   );
 }
 
-const VALVE_POS: Record<'valve.gas' | 'valve.liquid', [string, string][]> = {
-  'valve.gas': [['back', 'Contre-siège arrière (prise fermée)'], ['mid', 'Milieu (prise ouverte)'], ['front', 'Contre-siège avant (ligne fermée)']],
-  'valve.liquid': [['open', 'Ouverte'], ['closed', 'Fermée']],
-};
+const OPENINGS: [number, string][] = [[0, 'fermée'], [0.05, 'entrouverte (5 %)'], [0.3, 'mi-ouverte (30 %)'], [1, 'ouverte']];
 
 function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart: () => void }) {
   const [s, setS] = useState<GameState>(() => level.setup(tier, mulberry32(tier === 'examen' ? Date.now() : 1)));
-  const [valveMenu, setValveMenu] = useState<'valve.gas' | 'valve.liquid' | null>(null);
+  const [panel, setPanel] = useState<PanelId | null>(null);
   const [showJournal, setShowJournal] = useState(false);
   const [toast, setToast] = useState<GameState['toast']>(null);
   const act = useCallback((a: Action) => setS((x) => dispatch(level, x, a)), [level]);
@@ -94,7 +92,7 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
 
   const onTarget = (t: TargetId) => {
     const a = clickAction(s, t);
-    if (a === 'valveMenu') setValveMenu(t as 'valve.gas' | 'valve.liquid');
+    if ('panel' in a) setPanel(a.panel);
     else act(a);
   };
 
@@ -106,7 +104,9 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
   const hoseTool = s.tool?.startsWith('hose:') ? s.tool.slice(5) : null;
   const sockets: Socket[] = ['mf.lp', 'mf.center', 'mf.hp', ...(s.manifold.fourWay ? ['mf.vac' as const] : []),
     ...(s.bench.pump ? ['pump' as const] : []), ...(s.bench.recovery ? ['rec.in' as const, 'rec.out' as const] : []),
-    ...(s.bench.n2 ? ['n2' as const] : []), ...(s.bench.cylinder ? ['cyl.gas' as const, 'cyl.liq' as const] : [])];
+    ...(s.bench.n2 ? ['n2' as const] : []), ...(s.bench.cylinder ? ['cyl.gas' as const] : []),
+    ...(s.bench.cylinder && s.bench.cylinder.dipTube !== false ? ['cyl.liq' as const] : [])];
+  const mfValves: ManifoldValve[] = ['lp', 'hp', ...(s.manifold.fourWay ? ['charge' as const] : [])];
 
   return (
     <div className="lv">
@@ -123,19 +123,7 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
         <div className="lv-scene">
           <PlatineBoard view={sceneView(s, highlight(level, s))} onTarget={onTarget} cursorTool={s.tool ?? undefined} />
           {s.tool && <div className="lv-cursor">Outil : {toolLabel(s.tool, s.hoses)}</div>}
-          {valveMenu && (
-            <div className="lv-popover card" role="dialog" aria-label={TARGET_LABELS[valveMenu]}>
-              <strong>{TARGET_LABELS[valveMenu]}</strong>
-              {VALVE_POS[valveMenu].map(([pos, label]) => (
-                <button key={pos} type="button" aria-pressed={(valveMenu === 'valve.gas' ? s.valves.gas : s.valves.liquid) === pos}
-                  onClick={() => {
-                    act(valveMenu === 'valve.gas' ? { type: 'setServiceValve', valve: 'valve.gas', pos: pos as ThreeWay } : { type: 'setServiceValve', valve: 'valve.liquid', pos: pos as 'open' | 'closed' });
-                    setValveMenu(null);
-                  }}>{label}</button>
-              ))}
-              <button type="button" onClick={() => setValveMenu(null)}>Annuler</button>
-            </div>
-          )}
+          {panel && <Panel id={panel} s={s} act={act} onClose={() => setPanel(null)} />}
         </div>
 
         <aside className="lv-side">
@@ -160,6 +148,19 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
                 {FLUID_IDS.map((f) => <option key={f}>{f}</option>)}
               </select>
             </label>
+            <div className="lv-open lv-small">Ouverture
+              {mfValves.map((v) => {
+                const cur = s.manifold.valves[v] ? s.manifold.opening[v] ?? 1 : 0;
+                const opts = OPENINGS.some(([o]) => o === cur) ? OPENINGS : [...OPENINGS, [cur, `${Math.round(cur * 100)} %`] as [number, string]];
+                return (
+                  <label key={v}>{{ lp: 'BP', hp: 'HP', charge: 'charge', vac: 'vide' }[v]}{' '}
+                    <select value={cur} onChange={(e) => act({ type: 'setManifoldOpening', valve: v, opening: Number(e.target.value) })}>
+                      {opts.map(([o, l]) => <option key={o} value={o}>{l}</option>)}
+                    </select>
+                  </label>
+                );
+              })}
+            </div>
             <h4>Flexibles</h4>
             <ul className="lv-hoses">
               {s.hoses.map((h) => (
@@ -192,6 +193,8 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
             {s.bench.scaleTare !== undefined && <Scale kg={scaleGross(s)} tare={s.bench.scaleTare} onTare={() => act({ type: 'tareScale' })} />}
             <Bench s={s} act={act} level={level} />
           </section>
+
+          {(level.tools.includes('gasDetector') || s.room || s.ignition) && <Atex s={s} act={act} level={level} />}
 
           {answersFor(level, tier).length > 0 && (
             <section className="card">
@@ -259,7 +262,12 @@ function Bench({ s, act, level }: { s: GameState; act: (a: Action) => void; leve
   return (
     <div className="lv-bench">
       <h4>Commandes</h4>
-      {level.unitControl && <button type="button" onClick={() => act({ type: 'setUnit', on: !s.running })}>{s.running ? 'Arrêter l\'unité' : 'Mettre en marche'}</button>}
+      {level.unitControl && (
+        <>
+          <button type="button" onClick={() => act({ type: 'setUnit', on: !s.unitOn })}>{s.unitOn ? 'Arrêter l\'unité' : 'Mettre en marche'}</button>
+          {s.unitOn && <span className="lv-small">Compresseur : {s.running ? 'en marche' : 'à l\'arrêt'}</span>}
+        </>
+      )}
       {pump && <button type="button" aria-pressed={pump.on} onClick={() => act({ type: 'device', device: 'pump', on: !pump.on })}>Pompe à vide : {pump.on ? 'marche' : 'arrêt'}</button>}
       {recovery && <button type="button" aria-pressed={recovery.on} onClick={() => act({ type: 'device', device: 'recovery', on: !recovery.on })}>Station : {recovery.on ? 'marche' : 'arrêt'}</button>}
       {n2 && (
@@ -275,20 +283,64 @@ function Bench({ s, act, level }: { s: GameState; act: (a: Action) => void; leve
         <>
           <span className="lv-small">{cylinder.label}</span>
           <button type="button" aria-pressed={cylinder.gas} onClick={() => act({ type: 'cylValve', valve: 'gas' })}>Vanne gaz : {cylinder.gas ? 'ouverte' : 'fermée'}</button>
-          <button type="button" aria-pressed={cylinder.liq} onClick={() => act({ type: 'cylValve', valve: 'liq' })}>Vanne liquide : {cylinder.liq ? 'ouverte' : 'fermée'}</button>
+          {cylinder.dipTube !== false && <button type="button" aria-pressed={cylinder.liq} onClick={() => act({ type: 'cylValve', valve: 'liq' })}>Vanne liquide : {cylinder.liq ? 'ouverte' : 'fermée'}</button>}
+          <button type="button" aria-pressed={!!cylinder.inverted} onClick={() => act({ type: 'invertCylinder' })}>{cylinder.inverted ? 'Remettre la bouteille debout' : 'Retourner la bouteille'}</button>
         </>
       )}
-      {custom.map((c) => <CustomButton key={c.id} c={c} act={act} />)}
+      {custom.map((c) => <CustomButton key={c.id} c={c} s={s} act={act} />)}
     </div>
   );
 }
 
-function CustomButton({ c, act }: { c: NonNullable<Level['actions']>[number]; act: (a: Action) => void }) {
+function Atex({ s, act, level }: { s: GameState; act: (a: Action) => void; level: Level }) {
+  const d = gasDetector(s), fan = s.room?.fan;
+  return (
+    <section className="card lv-inst">
+      <h3>Sécurité fluide inflammable</h3>
+      {level.tools.includes('gasDetector') && (
+        <>
+          <div className="row">
+            <button type="button" aria-pressed={d.on} onClick={() => act({ type: 'setGasDetector', on: !d.on })}>Détecteur : {d.on ? 'marche' : 'arrêt'}</button>
+            <label className="lv-small">Position{' '}
+              <select value={d.position} onChange={(e) => act({ type: 'setGasDetector', position: e.target.value as typeof d.position })}>
+                <option value="floor">au sol</option>
+                <option value="head">à hauteur de tête</option>
+              </select>
+            </label>
+          </div>
+          <span className={`lv-small ${d.battery === 'ok' ? '' : 'lv-bad'}`}>Piles : {{ ok: 'OK', low: 'faibles', empty: 'vides' }[d.battery]}</span>
+          {d.battery !== 'ok' && <button type="button" className="lv-mini" onClick={() => act({ type: 'setGasDetector', battery: 'ok' })}>Remplacer les piles</button>}
+          {(() => { const r = gasReading(s); return <Readout label={r.label} value={r.value} unit={r.unit} digits={0} />; })()}
+        </>
+      )}
+      {s.tier === 'guide' && s.room && (
+        <p className="lv-small muted">Local {fmt(s.room.volume, 0)} m³ : sol {fmt(concentration(s, 'floor'), 0)} % LIE, tête {fmt(concentration(s, 'head'), 0)} % LIE</p>
+      )}
+      {fan && <button type="button" aria-pressed={fan.on} onClick={() => act({ type: 'setRoomFan', on: !fan.on })}>Ventilateur ATEX : {fan.on ? 'marche' : 'arrêt'}</button>}
+      {s.ignition && s.ignition.length > 0 && (
+        <>
+          <h4>Sources d'inflammation</h4>
+          <ul className="lv-hoses">
+            {s.ignition.map((x) => (
+              <li key={x.id}>
+                <span className={`lv-small ${x.active ? 'lv-bad' : 'lv-ok'}`}>{x.label} : {x.active ? 'active' : 'neutralisée'}</span>
+                {x.active && <button type="button" className="lv-mini" onClick={() => act({ type: 'setIgnition', id: x.id, active: false })}>Couper / retirer</button>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+function CustomButton({ c, s, act }: { c: NonNullable<Level['actions']>[number]; s: GameState; act: (a: Action) => void }) {
   const [v, setV] = useState('');
-  if (!c.input) return <button type="button" onClick={() => act({ type: 'custom', id: c.id })}>{c.label}</button>;
+  const label = typeof c.label === 'function' ? c.label(s) : c.label;
+  if (!c.input) return <button type="button" onClick={() => act({ type: 'custom', id: c.id })}>{label}</button>;
   return (
     <form className="row" onSubmit={(e) => { e.preventDefault(); const n = parseNumber(v); if (n !== null) act({ type: 'custom', id: c.id, value: n }); }}>
-      <label className="lv-small">{c.label} <input value={v} onChange={(e) => setV(e.target.value)} size={5} inputMode="decimal" /> {c.input.unit}</label>
+      <label className="lv-small">{label} <input value={v} onChange={(e) => setV(e.target.value)} size={5} inputMode="decimal" /> {c.input.unit}</label>
       <button type="submit" className="lv-mini">OK</button>
     </form>
   );

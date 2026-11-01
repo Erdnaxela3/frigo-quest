@@ -46,3 +46,7 @@
 .lv-card.locked { opacity: .45; }
 .lv-card h3 a { color: var(--text); text-decoration: none; }
 .toast { cursor: pointer; }
+.lv-open { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; }
+.lv-open select { width: auto; padding: .1rem .3rem; }
+.lv-dial { gap: .4rem; align-items: center; }
+.lv-popover p { margin: 0; }

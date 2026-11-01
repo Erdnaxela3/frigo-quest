@@ -1,11 +1,11 @@
 import { P_ATM } from '../physics/refrigerants';
-import { gasMass, hoseAt, hoseVol, makePlatine, P, vs } from '../game/platineModel';
+import { SYSTEM_IDS, gasMass, hoseAt, hoseVol, makePlatine, P, vs } from '../game/platineModel';
 import type { JointId } from '../game/sceneIds';
 import type { Action, GameState, Level, Socket, Step, Tier } from '../game/types';
 
 export const TARGET = 0.002; // bar abs, CAP limit (2 mbar); pros aim at 500 microns ≈ 0.67 mbar
 const HOLD_S = 600;
-const SYS = ['hp', 'liq', 'lp', 'comp'];
+const SYS = SYSTEM_IDS;
 const VARIANTS = ['dry', 'wet', 'leak', 'pump'] as const;
 const VERDICTS = ['Vide tenu : OK', 'Humidité (remontée puis palier)', 'Fuite (remontée linéaire sans fin)', 'Pompe défectueuse (n\'atteint pas le vide)'];
 const GAUGE = { circuit: 'comp', pump: hoseVol('vac') };

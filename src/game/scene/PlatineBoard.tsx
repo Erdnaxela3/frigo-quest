@@ -3,7 +3,7 @@ import type { ComponentId, SceneView, SegmentId, TargetId } from '../sceneIds';
 import { PLATINE_LAYOUT as L, coilPath, roundPath, type Box } from './layout';
 import {
   BoardCtx, Bulb, Clamp, CoilBody, Compressor, CrankHeater, Defs, ElecBox, Fan, Filter, FlowArrow, Hose, Joint, KP,
-  OilStain, Pipe, Plate, Receiver, Schrader, Screw, ServiceValve, SightGlass, Solenoid, Target, Thermostat, Tube, TXV,
+  OilStain, Pipe, Plate, Receiver, ReceiverValve, Regulator, Schrader, Screw, ServiceValve, SightGlass, Solenoid, Target, Thermostat, Tube, TXV,
 } from './parts';
 import './platine.css';
 
@@ -76,14 +76,14 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
   return (
     <div className="pt-wrap" data-tool={cursorTool || undefined}>
       <WoodBoard />
-      <svg className="pt-svg" viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Platine didactique split R32">
+      <svg className="pt-svg" viewBox={`0 0 ${W} ${H}`} role="group" aria-label={view.title ?? 'Platine didactique split R32'}>
         <Defs />
         <BoardCtx.Provider value={ctx}>
           {[[b.x + 16, b.y + 16], [b.x + b.w - 16, b.y + 16], [b.x + 16, b.y + b.h - 16], [b.x + b.w - 16, b.y + b.h - 16], [W / 2, b.y + 16], [W / 2, b.y + b.h - 16]]
             .map(([x, y]) => <Screw key={`${x},${y}`} x={x} y={y} />)}
           <g className="pt-title">
             <rect x={W / 2 - 205} y={34} width={410} height={30} rx={3} fill="url(#pt-brass)" stroke="#6d5216" />
-            <text x={W / 2} y={54} textAnchor="middle">PLATINE DIDACTIQUE · SPLIT R32 · 1,2 kg</text>
+            <text x={W / 2} y={54} textAnchor="middle">{view.title ?? 'PLATINE DIDACTIQUE · SPLIT R32 · 1,2 kg'}</text>
           </g>
           <text x={60} y={62} className="pt-zone">UNITÉ EXTÉRIEURE</text>
           <text x={1140} y={62} className="pt-zone" textAnchor="end">UNITÉ INTÉRIEURE</text>
@@ -93,7 +93,7 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           {/* cables, behind everything */}
           <path d={`M${L.terminalBox.x + 14},612 V820 H${L.elecBox.x}`} className="pt-cable" />
           <path d={`M${L.condFan.cx + 40},${L.condFan.cy + 82} V300 H626 V690 H680 V${L.elecBox.y}`} className="pt-cable" />
-          <path d={`M${L.evapFan.cx},${L.evapFan.cy + 72} V376 H1030 V${L.elecBox.y}`} className="pt-cable" />
+          <path d={`M${L.evapFan.cx},${L.evapFan.cy + 72} V376 H1046 V${L.elecBox.y}`} className="pt-cable" />
           <path d={`M${solX + 27},${solY - 37} H690 V${L.elecBox.y}`} className="pt-cable thin" />
 
           {/* thin lines: capillaries and equaliser */}
@@ -105,7 +105,7 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
             : `${roundPath(L.bulbCap.slice(0, 3), 8)} Q1040,200 ${L.bulbLoose.x + 7},${L.bulbLoose.y}`} className="pt-capillary" />
           {[0, 1, 2, 3].map((i) => <circle key={i} cx={830 + i * 9} cy={85} r={8} className="pt-capillary" />)}
 
-          {(['discharge', 'liquid', 'liquidAfterFilter', 'evaporator', 'suction'] as const).map(pipe)}
+          {(['discharge', 'liquid', 'filterLine', 'liquidAfterFilter', 'evaporator', 'suction'] as const).map(pipe)}
           {L.clamps.map(([x, y, d]) => <Clamp key={`${x},${y}`} x={x} y={y} dir={d} />)}
           {L.arrows.map(([x, y, a]) => <FlowArrow key={`${x},${y}`} x={x} y={y} a={a} />)}
 
@@ -129,14 +129,18 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           <Target id="comp.solenoid"><Solenoid on={running} /></Target>
           <Target id="comp.txv"><TXV /></Target>
           <Target id="comp.txvBulb"><Bulb attached={view.bulbAttached} /></Target>
-          <Target id="comp.thermostat"><Thermostat running={running} /></Target>
+          <Target id="comp.thermostat"><Thermostat running={running} troom={view.troom} /></Target>
           <Target id="comp.elecBox"><ElecBox running={running} /></Target>
+          {view.kvp && <Target id="comp.kvp"><Regulator c={L.anchors['comp.kvp']} model="KVP" reverse /></Target>}
+          {view.kvr && <Target id="comp.kvr"><Regulator c={L.anchors['comp.kvr']} model="KVR" rotate={180} /></Target>}
 
           <Target id="valve.liquid"><ServiceValve c={L.liqValve} pos={view.valves['valve.liquid']} /></Target>
           <Target id="valve.gas"><ServiceValve c={L.gasValve} pos={view.valves['valve.gas']} big /></Target>
+          <Target id="valve.receiver"><ReceiverValve pos={view.valves['valve.receiver']} /></Target>
           <Target id="port.hp"><Schrader from={[L.hpTee[0], L.hpTee[1] + 4]} to={L.anchors['port.hp']} hose={view.hoses['port.hp']} /></Target>
           <Target id="port.liq"><Schrader from={[L.anchors['port.liq'][0], L.liqValve[1] + 13]} to={L.anchors['port.liq']} hose={view.hoses['port.liq']} /></Target>
           <Target id="port.lp"><Schrader from={[L.anchors['port.lp'][0], L.gasValve[1] + 15]} to={L.anchors['port.lp']} hose={view.hoses['port.lp']} /></Target>
+          <Target id="port.evap"><Schrader from={L.evapPortFrom} to={L.anchors['port.evap']} hose={view.hoses['port.evap']} right /></Target>
 
           <Joint id="joint.compDischarge" vertical braze />
           <Joint id="joint.compSuction" braze />
@@ -159,6 +163,11 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           </g>
           {view.oilStains.map((j) => <OilStain key={j} at={L.anchors[j]} />)}
 
+          {/* hoses under the plates so a hose never hides a label */}
+          {(Object.keys(view.hoses) as (keyof typeof view.hoses)[]).map((p) => {
+            const c = view.hoses[p];
+            return c && <Hose key={p} port={p} color={c} />;
+          })}
           <Plate x={215} y={316 - 12} text="CONDENSEUR" />
           <Plate x={440} y={292} text="VENTILATEUR COND." small />
           <Plate x={260} y={728} text="COMPRESSEUR SCROLL" />
@@ -170,6 +179,8 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           <Plate x={433} y={642} text="BP" small />
           <Plate x={250} y={500} text="PRISE HP" small />
           <Plate x={578} y={522} text="V. LIQUIDE" small />
+          <Plate x={365} y={491} text="V. RÉSERVOIR" small />
+          <Plate x={1076} y={576} text="PRISE ÉVAP." small />
           <Plate x={655} y={650} text="V. GAZ 3 VOIES" small />
           <Plate x={628} y={502} text="ÉLECTROVANNE" small />
           <Plate x={760} y={260} text="DÉTENDEUR TE2" small />
@@ -178,12 +189,10 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           <Plate x={1098} y={290} text="VENTILATEUR ÉVAP." small />
           <Plate x={1098} y={506} text="THERMOSTAT" small />
           <Plate x={850} y={703} text="COFFRET ÉLECTRIQUE" />
+          {view.kvp && <Plate x={800} y={644} text="KVP" small />}
+          {view.kvr && <Plate x={100} y={538} text="KVR" small />}
           <text x={860} y={393} className="pt-tiny pt-engrave" textAnchor="middle">égalisation externe</text>
 
-          {(Object.keys(view.hoses) as (keyof typeof view.hoses)[]).map((p) => {
-            const c = view.hoses[p];
-            return c && <Hose key={p} port={p} color={c} />;
-          })}
         </BoardCtx.Provider>
       </svg>
     </div>

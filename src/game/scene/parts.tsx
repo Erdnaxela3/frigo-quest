@@ -167,10 +167,11 @@ export function SightGlass({ state }: { state: keyof typeof SG_FILL }) {
   );
 }
 
-export function Schrader({ from, to, hose }: { from: Pt; to: Pt; hose?: HoseColor }) {
-  const [x, y0] = from, y1 = to[1];
+/** Drawn downward from `from`; `right` points it to the right instead (to.x sets the length). */
+export function Schrader({ from, to, hose, right }: { from: Pt; to: Pt; hose?: HoseColor; right?: boolean }) {
+  const [x, y0] = from, y1 = right ? y0 + to[0] - x : to[1];
   return (
-    <g>
+    <g transform={right ? `rotate(-90 ${x} ${y0})` : undefined}>
       <rect x={x - 3.5} y={y0} width={7} height={y1 - y0 - 6} fill="url(#pt-brass)" stroke="#6d5216" strokeWidth={0.6} />
       <rect x={x - 5} y={y0 + 4} width={10} height={4} fill="url(#pt-brass)" stroke="#6d5216" strokeWidth={0.6} />
       {hose
@@ -195,6 +196,20 @@ export function ServiceValve({ c, pos, big }: { c: Pt; pos: 'open' | 'closed' | 
       <rect x={cx - 3.5} y={cy - hh - 11 - s} width={7} height={s} fill="url(#pt-steel)" stroke="#555" strokeWidth={0.5} />
       <rect x={cx - 1.6} y={cy - hh - 12.5 - s} width={3.2} height={2.5} fill="#222" />
       <text x={cx + 12} y={cy - hh - 15} className="pt-tiny pt-engrave">{STEM_TXT[pos]}</text>
+    </g>
+  );
+}
+
+/** Receiver outlet (Rotalock-style) valve: body on the vertical outlet, spindle to the right. */
+export function ReceiverValve({ pos }: { pos: 'open' | 'closed' }) {
+  const [cx, cy] = L.receiverValve, s = pos === 'open' ? 14 : 4;
+  return (
+    <g filter="url(#pt-shadow)">
+      <rect x={cx - 11} y={cy - 9} width={22} height={18} rx={3} fill="url(#pt-brass)" stroke="#6d5216" />
+      <rect x={cx + 11} y={cy - 5} width={9} height={10} rx={1} fill="url(#pt-brass)" stroke="#6d5216" />
+      <rect x={cx + 20} y={cy - 3} width={s} height={6} fill="url(#pt-steel)" stroke="#555" strokeWidth={0.5} />
+      <rect x={cx + 20 + s} y={cy - 1.6} width={2.5} height={3.2} fill="#222" />
+      <text x={cx + 14} y={cy - 9} className="pt-tiny pt-engrave">{pos === 'open' ? 'OUVERT' : 'FERMÉ'}</text>
     </g>
   );
 }
@@ -268,13 +283,13 @@ export function Bulb({ attached }: { attached: boolean }) {
   );
 }
 
-export function Thermostat({ running }: { running: boolean }) {
+export function Thermostat({ running, troom = 24 }: { running: boolean; troom?: number }) {
   const b = L.thermostat;
   return (
     <g filter="url(#pt-shadow)">
       <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={10} fill="#ece9e2" stroke="#9a968c" />
       <rect x={b.x + 12} y={b.y + 14} width={b.w - 24} height={26} rx={3} fill="#9fb59a" stroke="#556" />
-      <text x={b.x + b.w / 2} y={b.y + 33} textAnchor="middle" fontSize={14} className="pt-lcd">24.0°</text>
+      <text x={b.x + b.w / 2} y={b.y + 33} textAnchor="middle" fontSize={14} className="pt-lcd">{troom.toFixed(1)}°</text>
       <circle cx={b.x + b.w / 2} cy={b.y + 70} r={17} fill="#f7f6f2" stroke="#b5b1a8" />
       <line x1={b.x + b.w / 2} y1={b.y + 70} x2={b.x + b.w / 2 + 10} y2={b.y + 60} stroke="#555" strokeWidth={2} strokeLinecap="round" />
       <circle cx={b.x + 12} cy={b.y + b.h - 10} r={3} fill={running ? 'var(--liquid)' : '#bbb'} />
@@ -423,5 +438,21 @@ export function Defs() {
         <feDropShadow dx="2.5" dy="4" stdDeviation="2.5" floodColor="#2a1a08" floodOpacity=".45" />
       </filter>
     </defs>
+  );
+}
+
+/** Danfoss KVP / KVR: brass body in line with the pipe, steel bell, cap, Schrader gauge port. Drawn along x, dome up; rotate for a vertical pipe. */
+export function Regulator({ c, model, rotate = 0, reverse }: { c: Pt; model: string; rotate?: number; reverse?: boolean }) {
+  return (
+    <g filter="url(#pt-shadow)" transform={`translate(${c[0]} ${c[1]}) rotate(${rotate})`}>
+      {[-1, 1].map((d) => <rect key={d} x={d * 21 - 5} y={-8} width={10} height={16} rx={1.5} fill="url(#pt-brass)" stroke="#6d5216" />)}
+      <rect x={-16} y={-10} width={32} height={20} rx={3} fill="url(#pt-brass)" stroke="#6d5216" />
+      <rect x={-6} y={-18} width={12} height={9} fill="url(#pt-brass)" stroke="#6d5216" />
+      <rect x={-11} y={-48} width={22} height={31} rx={5} fill="url(#pt-steel)" stroke="#555" />
+      <rect x={-7} y={-56} width={14} height={9} rx={2} fill="#2b2f33" stroke="#000" />
+      <text x={0} y={-30} textAnchor="middle" fontSize={6.5} fontWeight={800} fill="#1f2326" transform="rotate(-90 0 -32)">{model}</text>
+      <rect x={9} y={9} width={6} height={9} fill="url(#pt-brass)" stroke="#6d5216" />
+      <path d={reverse ? 'M5,4 h-10 m3,-2.5 l-3,2.5 l3,2.5' : 'M-5,4 h10 m-3,-2.5 l3,2.5 l-3,2.5'} stroke="#6d5216" fill="none" strokeWidth={1} />
+    </g>
   );
 }

@@ -11,15 +11,15 @@ import {
 import { FLUID_IDS, psat, toRel, tsat } from '../physics/refrigerants';
 import type { FluidId } from '../physics/types';
 
-const SEGMENTS: SegmentId[] = ['discharge', 'condenser', 'liquid', 'liquidAfterFilter', 'evaporator', 'suction'];
+const SEGMENTS: SegmentId[] = ['discharge', 'condenser', 'liquid', 'filterLine', 'liquidAfterFilter', 'evaporator', 'suction'];
 const STATES: SegmentState[] = ['vapour', 'liquid', 'twoPhase', 'empty', 'n2', 'vacuum'];
 const FROST_KEYS = ['suction', 'evaporator', 'liquidAfterFilter', 'comp.evaporator', 'comp.txv', 'comp.txvBulb', 'comp.filter', 'comp.sightglass', 'comp.solenoid', 'comp.compressor', 'comp.receiver'] as const;
 
 const RUNNING: SceneView = {
   running: true,
-  segments: { discharge: 'vapour', condenser: 'twoPhase', liquid: 'liquid', liquidAfterFilter: 'liquid', evaporator: 'twoPhase', suction: 'vapour' },
+  segments: { discharge: 'vapour', condenser: 'twoPhase', liquid: 'liquid', filterLine: 'liquid', liquidAfterFilter: 'liquid', evaporator: 'twoPhase', suction: 'vapour' },
   frost: {},
-  valves: { 'valve.liquid': 'open', 'valve.gas': 'mid' },
+  valves: { 'valve.liquid': 'open', 'valve.gas': 'mid', 'valve.receiver': 'open' },
   hoses: { 'port.lp': 'blue', 'port.hp': 'red' },
   fans: { cond: true, evap: true },
   sightGlass: 'clair',
@@ -29,8 +29,8 @@ const RUNNING: SceneView = {
 };
 const STOPPED: SceneView = {
   ...RUNNING, running: false, fans: { cond: false, evap: false }, hoses: {},
-  segments: { discharge: 'n2', condenser: 'n2', liquid: 'n2', liquidAfterFilter: 'n2', evaporator: 'n2', suction: 'n2' },
-  valves: { 'valve.liquid': 'open', 'valve.gas': 'back' }, sightGlass: 'vide',
+  segments: { discharge: 'n2', condenser: 'n2', liquid: 'n2', filterLine: 'n2', liquidAfterFilter: 'n2', evaporator: 'n2', suction: 'n2' },
+  valves: { 'valve.liquid': 'open', 'valve.gas': 'back', 'valve.receiver': 'open' }, sightGlass: 'vide',
 };
 
 export default function DevScene() {

@@ -2,7 +2,11 @@ import { PORTS, TARGET_LABELS, VALVES, type PortId, type TargetId } from './scen
 import type {
   Action, AnswerField, CapId, GameState, Hose, Level, Objective, Reading, Result, RuleAction, Severity, Socket, Step, Tier, ToolId,
 } from './types';
-import { DT, defaultReading, hoseAt, hoseVol, physicsStep, startUnit, stopUnit, systemRef, vent } from './platineModel';
+import {
+  DT, KP_LIMITS, P, REG_LIMITS, REG_STEP, control, detectorWorks, vs, defaultReading, gasDetector, hoseAt, hoseVol, physicsStep, stopUnit, systemRef, vent,
+} from './platineModel';
+import { kpCutIn } from '../physics/cycle';
+import { toRel } from '../physics/refrigerants';
 
 export const PENALTY: Record<Severity, number> = { minor: 5, major: 15, critical: 40 };
 export const HINT_COST: Record<Tier, number | null> = { guide: 0, standard: 5, examen: null };
@@ -14,6 +18,8 @@ export const TIERS: { id: Tier; label: string; desc: string }[] = [
 ];
 export const SEVERITY_LABEL: Record<Severity, string> = { minor: 'Mineure', major: 'Majeure', critical: 'Critique' };
 export const COLOR_FR = { blue: 'bleu', red: 'rouge', yellow: 'jaune' } as const;
+const MF_FR = { lp: 'BP', hp: 'HP', vac: 'vide', charge: 'charge' } as const;
+const P_hp = (s: GameState) => P(s, 'hp');
 export const SOCKET_LABELS: Record<Socket, string> = {
   ...PORTS,
   'mf.lp': 'Manifold, raccord BP', 'mf.hp': 'Manifold, raccord HP', 'mf.center': 'Manifold, raccord central', 'mf.vac': 'Manifold, raccord vide 3/8"',
@@ -60,10 +66,26 @@ function defaultInspect(s: GameState, t: TargetId): string {
   if (t === 'comp.compressor' || t === 'comp.elecBox') return s.nameplate;
   if (t === 'comp.sightglass') return `${label} : ${{ clair: 'liquide clair', bulles: 'quelques bulles', mousse: 'mousse', vide: 'vide' }[s.running && s.cycle ? s.cycle.sightGlass : 'clair']}.`;
   if (t === 'valve.gas') return `${label} : ${{ back: 'contre-siège arrière (prise fermée)', mid: 'position milieu (prise ouverte)', front: 'contre-siège avant (ligne fermée)' }[s.valves.gas]}, chapeau ${s.caps[t] ? 'en place' : 'retiré'}.`;
-  if (t === 'valve.liquid') return `${label} : ${s.valves.liquid === 'open' ? 'ouverte' : 'fermée'}, chapeau ${s.caps[t] ? 'en place' : 'retiré'}.`;
+  if (t === 'valve.liquid' || t === 'valve.receiver') {
+    const v = t === 'valve.liquid' ? s.valves.liquid : s.valves.receiver;
+    return `${label} : ${v === 'open' ? 'ouvert(e)' : 'fermé(e)'}, chapeau ${s.caps[t] ? 'en place' : 'retiré'}.`;
+  }
+  if (t === 'comp.receiver') return `${label} : niveau de liquide ≈ ${Math.round(vs(s, 'hp').liquidFraction * 100)} %.`;
+  if (t === 'comp.kp1' || t === 'comp.kp5') {
+    const k = s.plant[t === 'comp.kp1' ? 'kp1' : 'kp5'];
+    return `${label} : échelle RANGE ${fmt(k.range + k.scaleError)} bar, DIFF ${fmt(k.diff)} bar, contact ${k.tripped ? 'ouvert (déclenché)' : 'fermé'}.`;
+  }
+  if (t === 'comp.thermostat' && s.plant.thermostat) {
+    const th = s.plant.thermostat;
+    return `${label} : affiche ${fmt(s.plant.Troom)} °C, consigne ${fmt(th.setpoint)} °C, différentiel ${fmt(th.diff)} K, ${th.call ? 'demande de froid' : 'satisfait'}.`;
+  }
   if (isPort(t)) {
     const h = hoseAt(s, t);
     return `${label} : ${h ? `${hoseName(h)} raccordé` : s.caps[t] ? 'bouchon en place' : 'bouchon retiré'}.`;
+  }
+  if (t === 'comp.kvp' || t === 'comp.kvr') {
+    const r = s.plant[t === 'comp.kvp' ? 'kvp' : 'kvr'];
+    return `${label} : ${!r ? 'absent' : r.enabled ? 'en service' : 'hors service (by-passé)'}${r && s.tier === 'guide' ? `, réglé à ${fmt(r.setting, 2)} bar` : ''}.`;
   }
   if (t.startsWith('joint.')) return `${label} : ${s.oilStains.includes(t as never) ? 'trace d\'huile !' : 'propre, rien d\'anormal.'}`;
   return `${label} : rien d'anormal.`;
@@ -99,7 +121,7 @@ function apply(l: Level, s: GameState, a: Action): string {
       const missing = (a.socket === 'pump' && !bench.pump) || (a.socket.startsWith('rec.') && !bench.recovery)
         || (a.socket === 'n2' && !bench.n2) || (a.socket.startsWith('cyl.') && !bench.cylinder)
         || (a.socket === 'mf.vac' && !s.manifold.fourWay);
-      if (missing) refuse(`${SOCKET_LABELS[a.socket]} : pas disponible ici.`);
+      if (missing || (a.socket === 'cyl.liq' && bench.cylinder?.dipTube === false)) refuse(`${SOCKET_LABELS[a.socket]} : pas disponible ici.`);
       h[a.end] = a.socket;
       return `${hoseName(h)} raccordé sur ${SOCKET_LABELS[a.socket]}`;
     }
@@ -122,15 +144,55 @@ function apply(l: Level, s: GameState, a: Action): string {
       if ((a.valve === 'vac' || a.valve === 'charge') && !s.manifold.fourWay) refuse('Manifold 2 voies : pas de vanne ' + a.valve + '.');
       const v = s.manifold.valves;
       v[a.valve] = !v[a.valve];
-      return `Manifold : vanne ${{ lp: 'BP', hp: 'HP', vac: 'vide', charge: 'charge' }[a.valve]} ${v[a.valve] ? 'ouverte' : 'fermée'}`;
+      delete s.manifold.opening[a.valve];
+      return `Manifold : vanne ${MF_FR[a.valve]} ${v[a.valve] ? 'ouverte' : 'fermée'}`;
+    }
+    case 'setManifoldOpening': {
+      if ((a.valve === 'vac' || a.valve === 'charge') && !s.manifold.fourWay) refuse('Manifold 2 voies : pas de vanne ' + a.valve + '.');
+      const o = Math.min(1, Math.max(0, a.opening));
+      s.manifold.valves[a.valve] = o > 0;
+      if (o > 0 && o < 1) s.manifold.opening[a.valve] = o;
+      else delete s.manifold.opening[a.valve];
+      return `Manifold : vanne ${MF_FR[a.valve]} ${o === 0 ? 'fermée' : o < 1 ? `entrouverte (${Math.round(o * 100)} %)` : 'ouverte'}`;
     }
     case 'setScale': s.manifold.scale = a.fluid; return `Échelle du manifold : ${a.fluid}`;
     case 'setServiceValve': {
       if (s.caps[a.valve]) refuse('Chapeau en place : retirez-le d\'abord (outil main).');
       if (a.valve === 'valve.gas') s.valves.gas = a.pos;
-      else s.valves.liquid = a.pos;
+      else if (a.valve === 'valve.liquid') s.valves.liquid = a.pos;
+      else s.valves.receiver = a.pos;
       const pos = { back: 'contre-siège arrière', mid: 'position milieu', front: 'contre-siège avant', open: 'ouverte', closed: 'fermée' }[a.pos];
       return `${TARGET_LABELS[a.valve]} : ${pos}`;
+    }
+    case 'setRegulator': {
+      const r = s.plant[a.reg] ?? refuse('Pas de ce régulateur sur cette installation.');
+      const [lo, hi] = REG_LIMITS[a.reg], name = a.reg.toUpperCase();
+      if (a.setting < lo - 1e-9 || a.setting > hi + 1e-9) refuse(`${name} : vis de réglage en butée (${fmt(lo)} à ${fmt(hi)} bar).`);
+      const n = Math.round((a.setting - r.setting) / REG_STEP[a.reg]);
+      r.setting = a.setting;
+      const turn = n ? `${Math.abs(n)} quart${Math.abs(n) > 1 ? 's' : ''} de tour sens ${n > 0 ? 'horaire (consigne ↑)' : 'antihoraire (consigne ↓)'}` : 'réglage';
+      return `${name} : ${turn}${s.tier === 'guide' ? `, ${fmt(a.setting, 2)} bar` : ''}`;
+    }
+    case 'setGasDetector': {
+      const d = (s.gasDetector = { ...gasDetector(s) });
+      if (a.on !== undefined) {
+        if (a.on && d.battery === 'empty') refuse('Détecteur : piles vides, remplacez-les.');
+        d.on = a.on;
+      }
+      if (a.position) d.position = a.position;
+      if (a.battery) d.battery = a.battery;
+      if (d.battery === 'empty') d.on = false;
+      return `Détecteur de gaz : ${d.on ? 'en marche' : 'éteint'}, ${d.position === 'floor' ? 'au sol' : 'à hauteur de tête'}${a.battery === 'ok' ? ', piles neuves' : ''}`;
+    }
+    case 'setIgnition': {
+      const src = s.ignition?.find((x) => x.id === a.id) ?? refuse(`Source inconnue : ${a.id}`);
+      src.active = a.active;
+      return `${src.label} : ${a.active ? 'remis en service' : 'coupé / retiré'}`;
+    }
+    case 'setRoomFan': {
+      const f = s.room?.fan ?? refuse('Pas de ventilateur ici.');
+      f.on = a.on;
+      return `Ventilateur ATEX : ${a.on ? 'en marche' : 'arrêté'}`;
     }
     case 'toggleSolenoid':
       s.valves.solenoid = !s.valves.solenoid;
@@ -141,11 +203,69 @@ function apply(l: Level, s: GameState, a: Action): string {
       return `${TARGET_LABELS[a.port]} : obus ${s.cores[a.port] ? 'retiré' : 'remis'}`;
     }
     case 'setUnit': {
-      if (a.on === s.running) refuse(a.on ? 'L\'unité tourne déjà.' : 'L\'unité est déjà arrêtée.');
+      if (a.on === s.unitOn) refuse(a.on ? 'L\'unité est déjà en marche.' : 'L\'unité est déjà arrêtée.');
       if (!a.on) { stopUnit(s); return 'Arrêt de l\'unité'; }
-      if (systemRef(s) < 0.3 * s.plant.nominalCharge) return 'Mise en marche : coupure immédiate du pressostat BP (circuit presque vide)';
-      startUnit(s);
-      return 'Mise en marche de l\'unité';
+      if (s.elec.locked) refuse('Installation consignée : déconsignez avant de remettre en marche.');
+      s.unitOn = true;
+      control(s);
+      if (s.running) return 'Mise en marche de l\'unité';
+      if (s.plant.kp5.tripped) return 'Mise en marche : pressostat HP (KP5) déclenché, le compresseur ne démarre pas (réarmement)';
+      if (s.plant.kp1.tripped) return systemRef(s) < 0.3 * s.plant.nominalCharge
+        ? 'Mise en marche : coupure immédiate du pressostat BP (circuit presque vide)'
+        : 'Mise en marche : pressostat BP (KP1) ouvert, le compresseur attend l\'enclenchement';
+      return 'Mise en marche : thermostat satisfait, le compresseur attend la demande de froid';
+    }
+    case 'setPressostat': {
+      const k = s.plant[a.kp], lim = KP_LIMITS[a.kp], name = a.kp === 'kp1' ? 'KP1' : 'KP5';
+      const out = (v: number, [lo, hi]: readonly number[]) => v < lo - 1e-9 || v > hi + 1e-9;
+      if (a.range !== undefined && out(a.range, lim.range)) refuse(`${name} : butée de la vis RANGE (${fmt(lim.range[0])} à ${fmt(lim.range[1])} bar).`);
+      if (a.diff !== undefined && out(a.diff, lim.diff)) refuse(`${name} : butée de la vis DIFF (${fmt(lim.diff[0])} à ${fmt(lim.diff[1])} bar).`);
+      if (a.range !== undefined) k.range = a.range - k.scaleError;
+      if (a.diff !== undefined) k.diff = a.diff;
+      return `${name} réglé (lecture échelle) : RANGE ${fmt(k.range + k.scaleError)} bar, DIFF ${fmt(k.diff)} bar`;
+    }
+    case 'resetKp5': {
+      const k = s.plant.kp5;
+      if (!k.tripped) refuse('KP5 : pas déclenché, rien à réarmer.');
+      if (toRel(P_hp(s)) > kpCutIn(k)) refuse('KP5 : la HP est encore trop haute, le réarmement ne tient pas.');
+      k.tripped = false;
+      return 'KP5 réarmé (bouton de réarmement manuel)';
+    }
+    case 'setThermostat': {
+      const th = s.plant.thermostat ?? refuse('Pas de thermostat réglable ici.');
+      if (a.setpoint !== undefined) th.setpoint = a.setpoint;
+      if (a.diff !== undefined) {
+        if (a.diff < 0.5) refuse('Différentiel minimum : 0,5 K.');
+        th.diff = a.diff;
+      }
+      return `Thermostat : consigne ${fmt(th.setpoint)} °C, différentiel ${fmt(th.diff)} K`;
+    }
+    case 'adjustTxv': {
+      const n = Math.round(a.quarterTurns);
+      if (!n) refuse('Indiquez un nombre de quarts de tour.');
+      const sh = s.plant.txvSH + n;
+      if (sh < 1 || sh > 15) refuse('Détendeur : vis de réglage en butée.');
+      s.plant.txvSH = sh;
+      return `Détendeur : ${Math.abs(n)} quart${Math.abs(n) > 1 ? 's' : ''} de tour sens ${n > 0 ? 'horaire (fermeture, surchauffe ↑)' : 'antihoraire (ouverture, surchauffe ↓)'}`;
+    }
+    case 'lockout': {
+      if (s.elec.locked) refuse('Déjà consignée.');
+      stopUnit(s);
+      Object.assign(s.elec, { locked: true, voltageChecked: false, crankHeaterOnSince: null });
+      return 'Consignation : sectionneur Q1 ouvert et cadenassé';
+    }
+    case 'unlock': {
+      if (!s.elec.locked) refuse('L\'installation n\'est pas consignée.');
+      Object.assign(s.elec, { locked: false, voltageChecked: false, crankHeaterOnSince: s.t });
+      return 'Déconsignation : cadenas retiré, sectionneur Q1 refermé (résistance de carter sous tension)';
+    }
+    case 'checkVoltage':
+      s.elec.voltageChecked = s.elec.locked;
+      return s.elec.locked ? 'VAT au coffret : 0 V, absence de tension vérifiée' : 'Mesure au coffret : 230 V présents';
+    case 'invertCylinder': {
+      const c = s.bench.cylinder ?? refuse('Pas de bouteille sur le banc.');
+      c.inverted = !c.inverted;
+      return c.inverted ? 'Bouteille retournée (robinets en bas)' : 'Bouteille remise debout';
     }
     case 'device': {
       const d = s.bench[a.device] ?? refuse('Appareil absent du banc.');
@@ -169,6 +289,7 @@ function apply(l: Level, s: GameState, a: Action): string {
       s.bench.scaleTare = scaleGross(s);
       return `Balance tarée (${fmt(s.bench.scaleTare!, 3)} kg)`;
     case 'measure': {
+      if (a.tool === 'gasDetector' && !detectorWorks(s)) refuse('Détecteur de gaz éteint (ou piles vides) : mettez-le en marche.');
       const p = { tool: a.tool, target: a.target };
       const r = readingOf(l, s, p) ?? refuse('Rien à mesurer ici avec cet outil.');
       s.probes = s.probes.filter((x) => x.target !== a.target || x.tool !== a.tool);
@@ -188,7 +309,8 @@ function apply(l: Level, s: GameState, a: Action): string {
     case 'answer': {
       const f = answersFor(l, s.tier).find((x) => x.id === a.field) ?? refuse(`Champ inconnu : ${a.field}`);
       const exp = f.expected(s);
-      const ok = f.choices ? a.value === exp : Math.abs(a.value - exp) <= f.tol + 1e-9;
+      const tol = typeof f.tol === 'number' ? f.tol : f.tol.rel * Math.abs(exp);
+      const ok = f.choices ? a.value === exp : Math.abs(a.value - exp) <= tol + 1e-9;
       s.answers[f.id] = { value: a.value, ok };
       return `Relevé ${f.label} : ${f.choices ? f.choices[a.value] : `${fmt(a.value, 2)} ${f.unit}`}`;
     }
@@ -281,6 +403,7 @@ export function dispatch(l: Level, prev: GameState, a: Action): GameState {
     throw e;
   }
   if (!SILENT.has(a.type)) journal(s, text || '');
+  if (a.type === 'custom' && text && s.toast?.n === prev.toast?.n) toast(s, text);
   if (a.type === 'finish') {
     // whatever is left in hoses and manifold gets purged at the workshop
     const left = s.hoses.reduce((g, h) => g + (h.port && isPort(h.port) ? 0 : vent(s.circuit, hoseVol(h))), 0)
@@ -307,16 +430,29 @@ export function tick(l: Level, prev: GameState, dt: number): GameState {
   return s;
 }
 
-/** What a click on a board target means with the current tool. 'valveMenu': the UI asks for the position. */
-export function clickAction(s: GameState, target: TargetId): Action | 'valveMenu' {
+export type PanelId = 'valve.gas' | 'valve.liquid' | 'valve.receiver' | 'elec' | 'kp1' | 'kp5' | 'thermostat' | 'txv' | 'kvp' | 'kvr';
+
+/** What a click on a board target means with the current tool, or a panel for the UI to open. */
+export function clickAction(s: GameState, target: TargetId): Action | { panel: PanelId } {
   const t: ToolId | null = s.tool;
-  if (!t || t === 'hand') return isCap(target) && !(isPort(target) && hoseAt(s, target)) ? { type: 'toggleCap', target } : { type: 'inspect', target };
+  if (!t || t === 'hand') {
+    if (target === 'comp.elecBox') return { panel: 'elec' };
+    if (target === 'comp.thermostat' && s.plant.thermostat) return { panel: 'thermostat' };
+    return isCap(target) && !(isPort(target) && hoseAt(s, target)) ? { type: 'toggleCap', target } : { type: 'inspect', target };
+  }
+  if (t === 'screwdriver' || t === 'wrench') {
+    if (target === 'comp.kp1') return { panel: 'kp1' };
+    if (target === 'comp.kp5') return { panel: 'kp5' };
+    if (target === 'comp.txv') return { panel: 'txv' };
+    if (target === 'comp.kvp' && s.plant.kvp) return { panel: 'kvp' };
+    if (target === 'comp.kvr' && s.plant.kvr) return { panel: 'kvr' };
+  }
   if (t.startsWith('hose:')) {
     const id = t.slice(5), h = s.hoses.find((x) => x.id === id);
     if (h && isPort(target)) return h.port === target ? { type: 'disconnectHose', hose: id, end: 'port' } : { type: 'connectHose', hose: id, end: 'port', socket: target };
     return { type: 'inspect', target };
   }
-  if (t === 'wrench') return target.startsWith('valve.') ? 'valveMenu' : { type: 'inspect', target };
+  if (t === 'wrench') return target.startsWith('valve.') ? { panel: target as PanelId } : { type: 'inspect', target };
   if (t === 'coreTool') return isPort(target) ? { type: 'toggleCore', port: target } : { type: 'inspect', target };
   return { type: 'measure', tool: t, target };
 }

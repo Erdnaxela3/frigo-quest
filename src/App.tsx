@@ -9,6 +9,7 @@ import LevelsPage from './game/LevelsPage';
 import LevelPage from './game/LevelPage';
 import Lab from './levels/Lab';
 import DevScene from './game/DevScene';
+import ExamPage from './learn/ExamPage';
 
 const NAV: [string, string][] = [
   ['', 'Accueil'],
@@ -17,6 +18,7 @@ const NAV: [string, string][] = [
   ['lecons', 'Leçons'],
   ['quiz', 'Quiz'],
   ['cartes', 'Flashcards'],
+  ['examen', 'Examens blancs'],
   ['progres', 'Progression'],
 ];
 
@@ -32,6 +34,7 @@ export default function App() {
       case 'cartes': return <FlashcardsPage />;
       case 'progres': return <Dashboard />;
       case 'dev': return <DevScene />;
+      case 'examen': return <ExamPage args={args} />;
       default: return <Home />;
     }
   })();

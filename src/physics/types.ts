@@ -111,10 +111,14 @@ export interface CycleInput {
   dTcondNominal?: number; // K, default 12
   dTevapNominal?: number; // K, default 8 (AC: ~15)
   nominalCurrent?: number; // A at nominal point, default 4.5 (R32 3.5 kW)
+  evapPressureFloor?: number; // bar abs, KVP: evaporator pressure kept ≥ floor (compressor suction stays lower)
+  condPressureFloor?: number; // bar abs, KVR: condensing pressure kept ≥ floor
+  txvMinDP?: number; // bar, HP − BP below which the TXV starves; default 0.4 × (Psat 40 °C − Psat 0 °C)
 }
 
 export interface CycleOutput {
-  BP: number; // bar abs
+  BP: number; // bar abs, evaporator
+  BPsuction?: number; // bar abs, compressor suction (below BP when a KVP throttles)
   HP: number; // bar abs
   Tevap: number; // dew
   Tcond: number; // bubble

@@ -4,11 +4,13 @@ import { COLOR_FR } from './engine';
 export const TOOL_LABELS: Record<string, string> = {
   hand: 'Main : bouchons, inspection',
   wrench: 'Clé de vanne de service',
+  screwdriver: 'Tournevis (pressostats, détendeur)',
   thermometer: 'Thermomètre à contact',
   clamp: 'Pince ampèremétrique',
   detector: 'Détecteur électronique',
   soap: 'Produit moussant',
   coreTool: 'Démonte-obus',
+  gasDetector: 'Détecteur de gaz HC (% LIE)',
 };
 
 export const toolLabel = (t: ToolId, hoses: Hose[]) => {

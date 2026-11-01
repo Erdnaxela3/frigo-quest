@@ -1,13 +1,13 @@
 import { P_ATM, rhoLiq } from '../physics/refrigerants';
 import { makeVolume } from '../physics/circuit';
-import { P, hoseAt, hoseVol, makePlatine, vs } from '../game/platineModel';
+import { P, SYSTEM_IDS, hoseAt, hoseVol, makePlatine, vs } from '../game/platineModel';
 import { emittedG, fmt, isPort, refuse, scaleGross } from '../game/engine';
 import type { GameState, Level, Socket, Step, Tier } from '../game/types';
 
 const CHARGE = 1.2; // kg, nameplate
 const OIL_G = 12; // g dissolved in the compressor oil, released after the first stop
 const CUTOFF = 0.7; // bar abs, station cut-off (slight vacuum)
-const SYS = ['hp', 'liq', 'lp', 'comp'];
+const SYS = SYSTEM_IDS;
 
 type Bad = 'mixed-fluids' | 'disposable-cylinder' | 'expired-cylinder';
 interface Cyl { text: string; short: string; V: number; tare: number; kg: number; bad?: Bad }
