@@ -52,6 +52,13 @@ function syncAir(s: GameState) {
   s.vars.wasRunning = s.running;
 }
 
+// answers do not toast by themselves: the standstill / stabilisation messages must be seen
+const say = (s: GameState, text: string) => { s.toast = { text, kind: 'info', n: (s.toast?.n ?? 0) + 1 }; return text; };
+const ptTable = (s: GameState) => {
+  const T0 = Math.round(s.plant.Tamb), row = (T: number) => `${T} °C : ${fmt(psat(s.fluid, T, 'bubble'), 2)}`;
+  return `Table P/T ${s.fluid} (bar ABSOLU, point de bulle) — ${[-2, -1, 0, 1, 2].map((d) => row(T0 + d)).join(' · ')} · … ${row(T0 + 12)}`;
+};
+
 const settled = (s: GameState) => (s.vars.fan ? s.t - num(s, 'fanT') >= 480 : s.t - num(s, 'stopT') >= 1200);
 
 const THEORY = 'Fiche purgeur : sur les grandes installations, un purgeur automatique d\'incondensables monté au point haut du condenseur '
@@ -121,10 +128,10 @@ const L11: Level = {
         'Arrêtez l\'unité puis action « Nettoyer le condenseur ».', ['comp.condenser']],
     },
     {
-      id: 'standstill', label: 'Essai à l\'arrêt : comparer la HP (bar abs) à Psat(T ambiante)',
+      id: 'standstill', label: 'Essai à l\'arrêt : comparer la HP (bar abs) à Psat(T air extérieur)',
       done: (s) => !!s.vars.standstill && ok(s, 'Psat'),
       hints: ['Compresseur arrêté, ventilateur condenseur en marche forcée ~10 min : le fluide se met à la température de l\'air. La HP doit alors valoir Psat(T air).',
-        'Arrêtez l\'unité, action « Ventilateur condenseur en marche forcée », attendez 10 min. Saisissez Psat(T air extérieur) en bar ABS (table) et la HP lue + 1,013.',
+        'Arrêtez l\'unité, action « Ventilateur condenseur en marche forcée », attendez 10 min. Saisissez Psat(T air extérieur) en bar ABS (bouton « Table P/T ») et la HP lue + 1,013.',
         ['comp.condFan', 'port.hp']],
     },
     {
@@ -177,6 +184,7 @@ const L11: Level = {
   ],
 
   actions: [
+    { id: 'pt', label: 'Table P/T R32 (bar absolu)' },
     { id: 'fan', label: 'Ventilateur condenseur en marche forcée', visible: (s) => !s.running && !s.vars.fan },
     { id: 'clean', label: 'Nettoyer le condenseur', visible: (s) => s.plant.faults.condFouling > 0 },
     { id: 'replace-fan', label: 'Remplacer le moteur du ventilateur condenseur', visible: (s) => !s.plant.faults.condFanOk },
@@ -192,10 +200,10 @@ const L11: Level = {
     if (a.type === 'answer') {
       const good = s.answers[a.field]?.ok;
       if (a.field === 'HPstill' && good) {
-        if (!settled(s)) return 'Mesure trop tôt : le condenseur n\'est pas encore à la température de l\'air. Laissez le ventilateur tourner ~10 min.';
+        if (!settled(s)) return say(s, 'Mesure trop tôt : le condenseur n\'est pas encore à la température de l\'air. Laissez le ventilateur tourner ~10 min, puis ressaisissez la HP.');
         s.vars.standstill = true;
         const gap = a.value - psatAmb(s);
-        return `Essai à l'arrêt : HP ${fmt(a.value, 2)} bar abs, Psat(${fmt(s.plant.Tamb)} °C) ${fmt(psatAmb(s), 2)} bar abs, écart ${fmt(gap, 2)} bar.`;
+        return say(s, `Essai à l'arrêt : HP ${fmt(a.value, 2)} bar abs, Psat(${fmt(s.plant.Tamb)} °C) ${fmt(psatAmb(s), 2)} bar abs, écart ${fmt(gap, 2)} bar.`);
       }
       if (a.field === 'remedy') {
         if (a.value === 0) {
@@ -204,20 +212,20 @@ const L11: Level = {
           vol.hp.mRef -= g; s.circuit.emitted.ref += g;
           s.circuit.emitted.air += 0.3 * (vol.hp.mAir + num(s, 'air'));
           vol.hp.mAir *= 0.7; s.vars.air = 0.7 * num(s, 'air');
-          return `Purge à l'air : ${fmt(g * 1000, 0)} g de R32 rejetés avec l'air, il reste des incondensables.`;
+          return say(s, `Purge à l'air : ${fmt(g * 1000, 0)} g de R32 rejetés avec l'air, il reste des incondensables.`);
         }
-        if (a.value === 5) return THEORY;
-        if (good && variant(s) === 'air') return THEORY;
+        if (a.value === 5 || (good && variant(s) === 'air')) return say(s, THEORY);
       }
       if (a.field === 'HPafter' && good && fixed(s)) {
-        if (s.t - (s.starts.at(-1) ?? 0) < 120) return 'Laissez la HP se stabiliser 2 à 3 min avant de comparer.';
+        if (s.t - (s.starts.at(-1) ?? 0) < 120) return say(s, 'Laissez la HP se stabiliser 2 à 3 min, puis ressaisissez-la.');
         s.vars.after = true;
-        return 'HP revenue à la normale après remise en état.';
+        return say(s, 'HP revenue à la normale après remise en état.');
       }
       return;
     }
     if (a.type !== 'custom') return;
     switch (a.id) {
+      case 'pt': return ptTable(s);
       case 'fan':
         if (s.running) refuse('Le ventilateur tourne déjà avec le compresseur.');
         if (!f.condFanOk) refuse('Le moteur du ventilateur ne démarre pas (HS) : équilibre en air calme, comptez ≈ 20 min.');

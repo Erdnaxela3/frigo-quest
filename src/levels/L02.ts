@@ -1,4 +1,4 @@
-import { FLUIDS, leakCheckMonths, tco2e } from '../physics/refrigerants';
+import { FLUIDS, leakCheckFor } from '../physics/refrigerants';
 import type { FluidId } from '../physics/types';
 import { makePlatine } from '../game/platineModel';
 import { fmt, isPort, refuse } from '../game/engine';
@@ -33,7 +33,7 @@ const pool = (s: GameState) => {
   return p;
 };
 const freqIndex = (s: GameState) => {
-  const m = leakCheckMonths(tco2e(s.vars.eqFluid as FluidId, s.vars.eqKg as number), !!s.vars.eqLDS, !!s.vars.eqHerm);
+  const m = leakCheckFor(s.vars.eqFluid as FluidId, s.vars.eqKg as number, !!s.vars.eqLDS, !!s.vars.eqHerm);
   return m === null ? 0 : [3, 6, 12, 24].indexOf(m) + 1;
 };
 const swept = (s: GameState, j: JointId) => !!s.vars[`sw:${j}`];
@@ -102,9 +102,10 @@ const L02: Level = {
     {
       id: 'regle', label: 'Déterminer les obligations de contrôle périodique',
       done: (s) => ok(s, 'mandatory', 'freq'),
-      hints: ['t CO₂e = charge (kg) × PRP / 1000. Seuils : 5, 50, 500 t CO₂e.',
+      hints: ['t CO₂e = charge (kg) × PRP / 1000. Seuils : 5, 50, 500 t CO₂e (HFO comme le R1234yf : seuils en kg, 1 / 10 / 100 kg).',
         'Platine : 1,2 × 675 / 1000 = 0,81 t < 5 t → pas de contrôle périodique (mais une suspicion de fuite impose recherche et réparation). '
-        + 'Équipement n°2 : 5–50 t → 12 mois, 50–500 t → 6 mois, ≥ 500 t → 3 mois ; ×2 avec détection permanente ; hermétique < 10 t exempté.'],
+        + 'Équipement n°2 : 5–50 t → 12 mois, 50–500 t → 6 mois, ≥ 500 t → 3 mois ; HFO (R1234yf) : 1–10 kg → 12 mois, 10–100 kg → 6 mois, ≥ 100 kg → 3 mois ; '
+        + '×2 avec détection permanente ; hermétique exempté sous 10 t CO₂e (HFO : sous 2 kg).'],
     },
     {
       id: 'visual', label: 'Inspection visuelle de tous les raccords (traces d\'huile, frottements)',
@@ -151,7 +152,7 @@ const L02: Level = {
   answers: [
     {
       id: 'mandatory', label: 'Platine : contrôle périodique obligatoire ?', unit: '', tol: 0, choices: ['Oui', 'Non'],
-      expected: (s) => (leakCheckMonths(tco2e(s.fluid, s.plant.nominalCharge)) === null ? 1 : 0),
+      expected: (s) => (leakCheckFor(s.fluid, s.plant.nominalCharge) === null ? 1 : 0),
     },
     { id: 'freq', label: 'Équipement n°2 du registre : périodicité', unit: '', tol: 0, choices: FREQ, expected: freqIndex },
     {
@@ -223,7 +224,8 @@ const L02: Level = {
   rules: [
     {
       id: 'wrong-frequency', severity: 'major', skill: 'A1:2.02', lesson: 'reglementation',
-      message: 'Obligation de contrôle mal déterminée : t CO₂e = charge (kg) × PRP / 1000 ; seuils 5 / 50 / 500 t → 12 / 6 / 3 mois, doublés avec détection permanente.',
+      message: 'Obligation de contrôle mal déterminée : t CO₂e = charge (kg) × PRP / 1000 ; seuils 5 / 50 / 500 t → 12 / 6 / 3 mois '
+        + '(HFO comme le R1234yf : 1 / 10 / 100 kg), doublés avec détection permanente.',
       when: ({ a, s }) => a.type === 'answer' && (a.field === 'mandatory' || a.field === 'freq') && !s.answers[a.field].ok,
     },
     {
@@ -252,7 +254,9 @@ const L02: Level = {
     {
       id: 'false-declaration', severity: 'major', skill: 'A1:4.01', lesson: 'etancheite',
       message: 'Déclaration de fuite erronée : ne déclarez que les fuites confirmées, et n\'en inventez pas.',
-      when: ({ a, s }) => a.type === 'answer' && LEAK_FIELDS.includes(a.field) && !s.answers[a.field].ok,
+      // an unsoaped joint is already penalised by 'unconfirmed'
+      when: ({ a, s }) => a.type === 'answer' && LEAK_FIELDS.includes(a.field) && !s.answers[a.field].ok
+        && (a.value >= NONE || soaped(s, JOINT_IDS[a.value])),
     },
     {
       id: 'no-record', severity: 'major', skill: 'A1:4.09', lesson: 'reglementation',

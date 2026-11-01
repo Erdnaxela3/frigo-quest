@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fluid, leakCheckMonths, tco2e } from '../../physics/refrigerants';
+import { fluid, leakCheckFor, tco2e } from '../../physics/refrigerants';
 import type { FluidId } from '../../physics/types';
 import { FluidSelect, Readout, Widget, clamp, fmt } from './common';
 
@@ -21,13 +21,13 @@ export default function Tco2e() {
   const f = fluid(id);
   const charge = Number.isFinite(kg) && kg > 0 ? kg : 0;
   const t = tco2e(id, charge);
-  const months = leakCheckMonths(t, lds, hermetic);
+  const months = leakCheckFor(f.id, charge, lds, hermetic);
   const notFgas = NOT_FGAS.includes(id);
 
   return (
     <Widget
       title="Tonnes équivalent CO₂ et fréquence des contrôles d'étanchéité"
-      note={<>t CO₂e = charge (kg) × PRP ÷ 1000. Un système de détection de fuites (LDS) double l'intervalle ; il est obligatoire à partir de 500 t CO₂e.</>}
+      note={<>t CO₂e = charge (kg) × PRP ÷ 1000. Un système de détection de fuites (LDS) double l'intervalle ; il est obligatoire à partir de 500 t CO₂e. HFO (R1234yf) : seuils en masse, 1 / 10 / 100 kg.</>}
     >
       <div className="widget-controls">
         <FluidSelect value={id} onChange={setId} />
@@ -40,7 +40,7 @@ export default function Tco2e() {
       </div>
 
       <div className="readouts">
-        <Readout label={`PRP du ${f.id}`} value={fmt(f.gwp, 0)} sub={f.safety} />
+        <Readout label={`PRP du ${f.id}`} value={fmt(f.gwp, f.gwp < 10 ? 3 : 0)} sub={f.safety} />
         <Readout label="Équivalent CO₂" value={`${fmt(t, t < 10 ? 2 : 1)} t`} sub={`${fmt(charge, 2)} kg × ${f.gwp} ÷ 1000`} accent="copper" />
         <Readout
           label="Contrôle d'étanchéité"

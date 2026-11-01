@@ -3,7 +3,7 @@ import { kpCutIn, kpCutOut } from '../physics/cycle';
 import { P, defaultReading, gaugeP, makePlatine, solenoidOpen, startsWithin } from '../game/platineModel';
 import { fmt, refuse } from '../game/engine';
 import type { GameState, Level, Step, Tier } from '../game/types';
-import type { TargetId } from '../game/sceneIds';
+import { TARGET_LABELS, type TargetId } from '../game/sceneIds';
 
 const PS_HP = 42; // bar rel, nameplate
 const HEAT_H = 12; // h, crankcase heater before a cold start
@@ -25,6 +25,10 @@ const cy = (s: GameState) => s.cycle ?? { BP: NaN, HP: NaN, Tevap: NaN, Tcond: N
 const VALVES_TO_SEE: TargetId[] = ['valve.receiver', 'valve.liquid', 'valve.gas'];
 const heaterH = (s: GameState) => (s.elec.crankHeaterOnSince === null ? 0 : (s.t - s.elec.crankHeaterOnSince) / 3600);
 const exam = (s: GameState) => s.tier === 'examen';
+const say = (s: GameState, text: string) => { s.toast = { text, kind: 'info', n: (s.toast?.n ?? 0) + 1 }; return text; };
+const POS_FR: Record<string, string> = {
+  open: 'ouverte', closed: 'fermée', openM: 'ouvert', closedM: 'fermé', back: 'contre-siège arrière (prise fermée)', mid: 'position milieu', front: 'contre-siège avant (ligne fermée)',
+};
 
 const REMISE = ['vat', 'terminals', 'visual', 'unlock', 'preheat', 'start', 'checks'];
 const REMISE_MISTAKES = ['no-consignation-check', 'start-valve-closed', 'no-crankcase-wait'];
@@ -59,7 +63,7 @@ const L07: Level = {
   tierNotes: {
     guide: 'Manifold déjà raccordé, carter chaud, échelle du KP1 juste. Jury : coupure 0,5 bar, enclenchement 2,0 bar → RANGE 2,0, DIFF 1,5.',
     standard: 'Jury : coupure 0,8 bar, enclenchement 2,3 bar. Échelle du KP1 décalée : mesurez, puis corrigez. Thermostat 22 °C : observez un cycle complet. Attention au court-cycle.',
-    examen: 'Valeurs du jury aléatoires, KP5 et thermostat à régler, compresseur froid (résistance de carter coupée depuis 2 jours). 45 min.',
+    examen: 'Valeurs du jury aléatoires, KP6 et thermostat à régler, compresseur froid (résistance de carter coupée depuis 2 jours). 45 min.',
   },
   tools: ['hand', 'wrench', 'screwdriver', 'thermometer', 'clamp'],
   unitControl: true,
@@ -84,7 +88,7 @@ const L07: Level = {
       err = pick(SCALE_ERR, rng());
       s.vars.closed = rng() < 0.5 ? 'liquid' : 'receiver';
       if (s.vars.closed === 'liquid') s.valves.liquid = 'closed'; else s.valves.receiver = 'closed';
-      s.plant.kp5 = { ...s.plant.kp5, range: 44, diff: 3 };
+      s.plant.kp5 = { ...s.plant.kp5, range: 42, diff: 4 }; // KP6 at its stop, = PS: the player must turn it down
       s.plant.thermostat = { setpoint: 18, diff: 1, call: true };
     }
     if (std) {
@@ -109,7 +113,7 @@ const L07: Level = {
       id: 'jury', label: (s) => {
         const j = jury(s);
         return `Fiche jury : KP1 coupure ${fmt(j.out)} / enclenchement ${fmt(j.in)} bar`
-          + (j.kp5 ? ` · KP5 coupure ${fmt(j.kp5)} bar · thermostat ${fmt(j.th!)} °C (diff 2 K)` : '');
+          + (j.kp5 ? ` · KP6 coupure ${fmt(j.kp5)} bar · thermostat ${fmt(j.th!)} °C (diff 2 K)` : '');
       },
     },
     { id: 'terminals', label: 'Coffret : contrôler le serrage des bornes' },
@@ -122,7 +126,7 @@ const L07: Level = {
       if (a.id === 'jury') {
         const j = jury(s);
         return `Fiche jury : KP1 coupure ${fmt(j.out)} bar, enclenchement ${fmt(j.in)} bar → RANGE ${fmt(j.in)}, DIFF ${fmt(j.in - j.out)}`
-          + (j.kp5 ? ` ; KP5 coupure ${fmt(j.kp5)} bar (réarmement manuel) ; thermostat ${fmt(j.th!)} °C, différentiel 2 K` : '');
+          + (j.kp5 ? ` ; KP6 coupure ${fmt(j.kp5)} bar (réarmement manuel) ; thermostat ${fmt(j.th!)} °C, différentiel 2 K` : '');
       }
       if (a.id === 'terminals') {
         s.vars.terminals = true;
@@ -137,6 +141,12 @@ const L07: Level = {
         return `Résistance de carter sous tension depuis ${HEAT_H} h : huile chaude, fluide chassé du carter`;
       }
     }
+    // the hand on a valve only toggles its cap: taking the cap off is where the player sees the stem position
+    if (a.type === 'toggleCap' && (VALVES_TO_SEE as string[]).includes(a.target) && !s.caps[a.target]) {
+      if (!s.inspected.includes(a.target)) s.inspected.push(a.target);
+      const pos = a.target === 'valve.gas' ? s.valves.gas : a.target === 'valve.liquid' ? s.valves.liquid : s.valves.receiver;
+      return say(s, `Chapeau retiré : ${TARGET_LABELS[a.target]}, ${POS_FR[a.target === 'valve.receiver' ? `${pos}M` : pos]}`);
+    }
     if (a.type === 'unlock' && !s.vars.juryHere) refuse('Déconsignation en présence du jury : appelez-le d\'abord.');
     if (a.type === 'checkVoltage' && s.elec.voltageChecked) s.vars.vat = true;
     if (a.type === 'inspect' && (a.target === 'comp.condFan' || a.target === 'comp.evapFan') && s.running) s.vars[a.target] = true;
@@ -150,13 +160,16 @@ const L07: Level = {
 
   onTick(s, dt) {
     const k1 = s.plant.kp1;
+    const now = lpGauge(s);
     if (k1.tripped !== s.vars.kpT) {
-      // a real KP switches at its set point; the 0.1 s step overshoots, so the reference is the set point itself
-      const g = lpGauge(s);
+      // a real KP switches at its set point; the step overshoots, so the reference is the set point itself.
+      // The gauge is taken from the previous step: on restart the model snaps the suction to the running BP within that step.
+      const g = typeof s.vars.lastG === 'number' ? s.vars.lastG : now;
       if (k1.tripped) Object.assign(s.vars, { seenOut: Number.isNaN(g) ? NaN : kpCutOut(k1), gaugeOut: g });
       else Object.assign(s.vars, { seenIn: Number.isNaN(g) ? NaN : kpCutIn(k1), gaugeIn: g });
       s.vars.kpT = k1.tripped;
     }
+    s.vars.lastG = now;
     if (startsWithin(s) > 6) s.vars.shortCycled = true;
     const th = s.plant.thermostat;
     if (th) {
@@ -200,7 +213,7 @@ const L07: Level = {
       done: (s) => VALVES_TO_SEE.every((v) => s.inspected.includes(v)) && s.valves.liquid === 'open' && s.valves.receiver === 'open'
         && s.valves.gas === 'mid' && hoseOn(s, 'port.lp', 'mf.lp') && hoseOn(s, 'port.hp', 'mf.hp'),
       hints: ['Une vanne restée fermée après la dernière intervention et c\'est le démarrage sur vanne fermée.',
-        'Inspectez robinet réservoir, vanne liquide et vanne gaz ; ouvrez ce qui est fermé ; flexible bleu sur la prise BP, rouge sur la HP ; vanne gaz en position milieu.',
+        'Outil main : retirez les chapeaux du robinet réservoir, de la vanne liquide et de la vanne gaz (la position s\'affiche) ; clé : ouvrez ce qui est fermé, vanne gaz en position milieu ; flexible bleu sur la prise BP, rouge sur la HP.',
         VALVES_TO_SEE],
     },
     {
@@ -216,7 +229,7 @@ const L07: Level = {
     {
       id: 'start', label: 'Mettre l\'unité en marche',
       done: (s) => s.running,
-      hints: ['Interrupteur de commande.', 'Bouton marche de l\'unité.'],
+      hints: ['Interrupteur de commande, une fois les vannes contrôlées et l\'installation déconsignée.', 'Bouton « Mettre en marche » dans le cadre Commandes.'],
     },
     {
       id: 'checks', label: 'Contrôler l\'intensité (pince) et les deux ventilateurs',
@@ -235,7 +248,7 @@ const L07: Level = {
       id: 'cutOut', label: 'Vérifier la coupure réelle (tirage au vide) et la noter (± 0,2 bar du jury)',
       done: (s) => ok(s, 'cutOut') && near(s.vars.seenOut, jury(s).out),
       hints: ['Fermez la vanne liquide : la BP chute, le KP1 arrête le compresseur. Notez la BP à cet instant.',
-        'Vanne liquide fermée, regardez le manomètre BP au moment de l\'arrêt, saisissez la valeur. Hors tolérance : corrigez RANGE (¼ tour = 0,15 bar) et recommencez.', ['valve.liquid', 'comp.kp1']],
+        'Vanne liquide fermée, regardez le manomètre BP au moment de l\'arrêt, saisissez la valeur. Hors tolérance : corrigez RANGE (¼ tour ≈ 0,17 bar) et recommencez.', ['valve.liquid', 'comp.kp1']],
     },
     {
       id: 'cutIn', label: 'Vérifier l\'enclenchement réel en rouvrant la vanne liquide, et le noter',
@@ -243,9 +256,9 @@ const L07: Level = {
       hints: ['Rouvrez la vanne liquide : la BP remonte, le KP1 redémarre le compresseur.', 'Notez la BP au redémarrage. Laissez la vanne liquide ouverte.', ['valve.liquid']],
     },
     {
-      id: 'kp5', label: `Régler le KP5 (HP, réarmement manuel) à la coupure du jury, sous PS (${PS_HP} bar)`,
+      id: 'kp5', label: `Régler le KP6 (HP, réarmement manuel) à la coupure du jury, sous PS (${PS_HP} bar)`,
       done: (s) => near(kpCutOut(s.plant.kp5), jury(s).kp5 ?? NaN, 0.25), tiers: ['examen'],
-      hints: ['KP5 : RANGE = coupure.', 'Tournevis sur le KP5, RANGE à la coupure demandée.', ['comp.kp5']],
+      hints: ['KP6 (pressostat HP pour R32, 8 à 42 bar) : RANGE = coupure.', 'Tournevis sur le KP6, RANGE à la coupure demandée.', ['comp.kp5']],
     },
     {
       id: 'thermo', label: 'Régler le thermostat (consigne du jury, différentiel 2 K)',
@@ -284,8 +297,8 @@ const L07: Level = {
     },
     {
       id: 'start-valve-closed', severity: 'critical', skill: 'A1:6.06', lesson: 'circuit',
-      message: 'Démarrage avec une vanne fermée : ligne liquide fermée = tirage au vide immédiat et compresseur qui tire au vide ; '
-        + 'refoulement ou aspiration fermés = surpression ou casse. Toujours contrôler les vannes avant la mise en marche.',
+      message: 'Démarrage avec une vanne fermée : vanne liquide ou robinet réservoir fermé = pump-down immédiat, le compresseur tire l\'aspiration vers le vide ; '
+        + 'vanne gaz en contre-siège avant = aspiration fermée, compresseur en dépression et mal refroidi. Toujours contrôler les vannes avant la mise en marche.',
       when: ({ a, prev, s }) => a.type === 'setUnit' && a.on && s.unitOn
         && (prev.valves.liquid === 'closed' || prev.valves.receiver === 'closed' || prev.valves.gas === 'front'),
     },
@@ -311,8 +324,10 @@ const L07: Level = {
     },
     {
       id: 'hp-above-ps', severity: 'critical', skill: 'A1:9.04', lesson: 'reglementation',
-      message: `Coupure du pressostat HP au-dessus de la PS (${PS_HP} bar) : l'organe de sécurité doit couper avant la pression maximale admissible.`,
-      when: ({ a, s }) => ((a.type === 'setPressostat' && a.kp === 'kp5') || (a.type === 'finish' && exam(s))) && kpCutOut(s.plant.kp5) > PS_HP,
+      message: `Coupure du pressostat HP à la PS ou au-dessus (${PS_HP} bar) : l'organe de sécurité doit couper avant la pression maximale admissible.`,
+      // the exam KP6 starts at PS: turning it down ¼ turn at a time must not count, only raising it or leaving it there
+      when: ({ a, prev, s }) => kpCutOut(s.plant.kp5) >= PS_HP && ((a.type === 'setPressostat' && a.kp === 'kp5' && kpCutOut(s.plant.kp5) > kpCutOut(prev.plant.kp5))
+        || (a.type === 'finish' && exam(s))),
     },
   ],
 
@@ -376,7 +391,7 @@ const L07: Level = {
       (s) => ({ type: 'answer', field: 'current', value: r2(cy(s).current) }),
     );
     if (ex) steps.push(
-      (s) => ({ type: 'setPressostat', kp: 'kp5', range: jury(s).kp5!, diff: 3 }),
+      (s) => ({ type: 'setPressostat', kp: 'kp5', range: jury(s).kp5!, diff: 4 }),
       (s) => ({ type: 'setThermostat', setpoint: jury(s).th!, diff: 2 }),
     );
     // wait for the thermostat to be satisfied and call again (no-op once the cycle is seen)

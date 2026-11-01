@@ -8,7 +8,7 @@ const SECTION = ['liq', 'lp'];
 const TEST = 10, HOLD = 5 * 60, VAC = 0.002; // bar rel, s, bar abs
 const SETTLE = 590; // s between TXV adjustments (10 min, float margin)
 const GOOD_ORIFICE = 4;
-const FACTORY_SH = 8; // static SH of a new TE2 on this evaporator → measured SH ≈ 10 K
+const FACTORY_SH = 8; // static SH of a new valve on this evaporator → measured SH ≈ 10 K
 const VARIANTS = ['loose', 'dead', 'big', 'small'] as const;
 type Variant = (typeof VARIANTS)[number];
 const DIAGS = [
@@ -20,10 +20,10 @@ const DIAGS = [
   'Filtre déshydrateur colmaté',
 ];
 const BODIES = {
-  R32: 'Corps TE2 version R32 (étiquette « R32 », référence à vérifier dans le catalogue Danfoss)',
-  N: 'Corps TE2 « N » (R134a)',
-  S: 'Corps TE2 « S » (R404A/R507)',
-  X: 'Corps TE2 « X » (R22/R407C)',
+  R32: 'Détendeur à élément thermostatique R32 (fluide marqué sur l\'élément)',
+  N: 'Détendeur à élément R134a (ancienne désignation Danfoss « N »)',
+  S: 'Détendeur à élément R404A/R507 (ancienne désignation « S »)',
+  X: 'Détendeur à élément R22/R407C (ancienne désignation « X »)',
 } as const;
 const BULB_POS = {
   ok: 'aspiration horizontale en sortie d\'évaporateur, avant le piquage d\'égalisation, à 1 h',
@@ -75,9 +75,9 @@ function bulbText(s: GameState): string {
 
 function txvText(s: GameState): string {
   const x = v(s);
-  const dossier = `Dossier technique : évaporateur 3,5 kW. Capacité TE2 par orifice en R32 (indicatif, à vérifier sur la doc Danfoss) : ${ORIFICE_TABLE}.`;
+  const dossier = `Dossier technique : évaporateur 3,5 kW. Capacité par orifice en R32 (indicatif, à vérifier dans la documentation du fabricant) : ${ORIFICE_TABLE}.`;
   if (!x.fitted) return `Détendeur déposé. ${dossier}`;
-  const body = x.body === 'old' ? 'Danfoss TE2 (version R32) d\'origine' : BODIES[x.body as keyof typeof BODIES];
+  const body = x.body === 'old' ? 'Détendeur Danfoss d\'origine, élément R32' : BODIES[x.body as keyof typeof BODIES];
   return `${body}, orifice n° ${pad(x.orifice as number)}, égalisation externe ${x.eq ? 'raccordée' : 'NON raccordée'}. ${dossier}`;
 }
 
@@ -88,12 +88,12 @@ const L08: Level = {
   lesson: 'composants',
   scene: 'PLATINE',
   fluid: 'R32',
-  briefing: 'Surchauffe élevée et pièce qui ne descend pas. Diagnostiquez le détendeur Danfoss TE2 (corps dudgeon × dudgeon, égalisation externe, '
-    + 'orifice interchangeable 00–06, bulbe séparé), remplacez-le si nécessaire et réglez la surchauffe entre 5 et 8 K '
+  briefing: 'Surchauffe élevée et pièce qui ne descend pas. Diagnostiquez le détendeur thermostatique Danfoss à orifice interchangeable (raccords dudgeon, égalisation externe, '
+    + 'orifice 00–06 indépendant du fluide, élément thermostatique et bulbe propres au fluide), remplacez-le si nécessaire et réglez la surchauffe entre 5 et 8 K '
     + '(¼ de tour à la fois, sens horaire = fermeture = surchauffe ↑, 10 min d\'attente entre deux réglages). '
     + 'Remplacement : pump-down sur la vanne liquide jusqu\'à la coupure du KP1 (≈ 0,2 bar), vanne gaz en contre-siège avant, consignation ; '
     + `la section intérieure (ligne liquide après la vanne + évaporateur) s'ouvre légèrement au-dessus de 0 bar. Après remontage : essai azote ${TEST} bar `
-    + `rel par la prise évaporateur (${HOLD / 60} min), tirage au vide < 2 mbar. Codes lettres des corps TE2 indicatifs, à vérifier dans la documentation Danfoss.`,
+    + `rel par la prise évaporateur (${HOLD / 60} min), tirage au vide < 2 mbar. Les anciennes lettres de désignation (N, S, X…) ne remplacent pas le fluide marqué sur l'élément.`,
   tierNotes: {
     guide: 'Bulbe tombé de la tuyauterie : on vérifie toujours le simple avant de démonter.',
     standard: 'Élément thermostatique mort : remplacement complet du détendeur.',
@@ -125,7 +125,7 @@ const L08: Level = {
     { id: 'bulb-warm', label: 'Chauffer le bulbe dans la main (test de l\'élément)', visible: (s) => !!v(s).fitted && !!v(s).bulbPos },
     { id: 'open-section', label: 'Déposer le détendeur (ouvrir la section intérieure)', visible: (s) => s.tier !== 'guide' && !opened(s) },
     ...Object.entries(BODIES).map(([k, label]) => ({ id: `body-${k}`, label: `Prendre : ${label}`, visible: (s: GameState) => opened(s) && !v(s).fitted })),
-    { id: 'body-old', label: 'Conserver le corps déposé', visible: (s) => opened(s) && !v(s).fitted },
+    { id: 'body-old', label: 'Conserver le détendeur déposé (élément d\'origine)', visible: (s) => opened(s) && !v(s).fitted },
     { id: 'orifice', label: 'Choisir l\'orifice (n° 00 à 06)', visible: (s) => opened(s) && !v(s).fitted, input: { unit: 'n°', min: 0, max: 6, step: 1 } },
     { id: 'fit-new', label: 'Monter le détendeur (flèche dans le sens du flux), écrous et joints neufs', visible: (s) => opened(s) && !v(s).fitted },
     { id: 'fit-old', label: 'Monter le détendeur en réutilisant les anciens écrous et joints', visible: (s) => opened(s) && !v(s).fitted },
@@ -145,6 +145,8 @@ const L08: Level = {
       x.adjSum = s.t - (x.adjT as number) < SETTLE ? (x.adjSum as number) + n : n;
       x.adjT = s.t;
     }
+    // a hunting valve swings 0–12 K in 90 s: any reading inside the swing is a fair initial measure
+    if (a.type === 'answer' && a.field === 'SH0' && hunting(s) && a.value >= -0.5 && a.value <= 12.5) s.answers.SH0.ok = true;
     if (a.type === 'answer' && a.field === 'SH') {
       const last = Math.max(x.adjT as number, s.starts.at(-1) ?? -1e9);
       const sh = cy(s).SH;
@@ -159,20 +161,23 @@ const L08: Level = {
         text = warmText(s);
       } else if (id === 'open-section') {
         if (!s.elec.locked) refuse('Consignez l\'installation avant d\'ouvrir le circuit.');
-        x.openP = openSection(s, SECTION);
+        const pl = rel(s, 'lp');
+        const pmax = openSection(s, SECTION);
+        // a closed (dead) TXV drains the short liquid line slowly: judge on what the gauge at port.evap shows
+        x.openP = pmax < 0 ? pmax : pl;
         Object.assign(x, { everOpened: true, fitted: false, eq: false, bulbPos: '', insul: false, pickBody: '', pickOrifice: -1, n2Ok: false, vacOk: false });
         s.leaks = s.leaks.filter((l) => l.joint !== 'joint.txvIn');
         text = `Détendeur déposé (dudgeons entrée/sortie, égalisation, bulbe) : section à ${fmt(x.openP as number)} bar rel à l'ouverture`;
       } else if (id.startsWith('body-')) {
         x.pickBody = id.slice(5);
-        text = id === 'body-old' ? 'Corps déposé conservé' : `Pris sur le plateau : ${BODIES[x.pickBody as keyof typeof BODIES]}`;
+        text = id === 'body-old' ? 'Détendeur déposé conservé' : `Pris sur le plateau : ${BODIES[x.pickBody as keyof typeof BODIES]}`;
       } else if (id === 'orifice') {
         const n = Math.round(Number(a.value));
         if (!(n >= 0 && n <= 6)) refuse('Orifices disponibles : 00 à 06.');
         x.pickOrifice = n;
         text = `Orifice n° ${pad(n)} choisi`;
       } else if (id === 'fit-new' || id === 'fit-old') {
-        if (!x.pickBody || (x.pickOrifice as number) < 0) refuse('Choisissez d\'abord le corps et l\'orifice.');
+        if (!x.pickBody || (x.pickOrifice as number) < 0) refuse('Choisissez d\'abord l\'élément et l\'orifice.');
         if (x.pickBody !== 'old') { x.dead = false; s.plant.txvSH = FACTORY_SH; }
         Object.assign(x, { body: x.pickBody, orifice: x.pickOrifice, fitted: true, newNuts: id === 'fit-new' });
         if (id === 'fit-old') s.leaks.push({ at: 'liq', k: 5e-7, joint: 'joint.txvIn' });
@@ -267,10 +272,10 @@ const L08: Level = {
       hints: ['Section entre 0 et 0,5 bar rel, installation consignée.', 'Action « Déposer le détendeur ».', ['comp.txv']],
     },
     {
-      id: 'parts', label: 'Choisir le corps TE2 pour le R32 et l\'orifice adapté', tiers: ['standard', 'examen'],
+      id: 'parts', label: 'Choisir l\'élément thermostatique pour le R32 et l\'orifice adapté', tiers: ['standard', 'examen'],
       done: (s) => !repl(s) || (bodyOk(s) && v(s).pickOrifice === GOOD_ORIFICE),
-      hints: ['La charge du bulbe est propre au fluide. L\'orifice se choisit sur la puissance de l\'évaporateur.',
-        'Corps marqué R32 ; table du dossier technique (inspecter le détendeur) : 3,5 kW → le plus petit orifice qui couvre 3,5 kW.', ['comp.txv']],
+      hints: ['La charge du bulbe (élément) est propre au fluide ; l\'orifice, indépendant du fluide, se choisit sur la puissance de l\'évaporateur.',
+        'Élément marqué R32 ; table du dossier technique (inspecter le détendeur) : 3,5 kW → le plus petit orifice qui couvre 3,5 kW.', ['comp.txv']],
     },
     {
       id: 'fit', label: 'Monter le détendeur avec écrous et joints neufs', tiers: ['standard', 'examen'],
@@ -302,17 +307,17 @@ const L08: Level = {
       id: 'n2', label: `Essai azote de la section (${TEST} bar rel, ${HOLD / 60} min, isolée)`, tiers: ['standard', 'examen'],
       done: (s) => !repl(s) || !!v(s).n2Ok,
       hints: ['Électrovanne fermée hors tension : la ligne liquide n\'est pas reliée à la prise évaporateur.',
-          `Ouverture manuelle de l'électrovanne, flexible jaune sur l'azote (${TEST} bar), manifold BP ouvert, puis isolez et attendez ${HOLD / 60} min.`, ['comp.solenoid', 'port.evap']],
+          `Clé ou tournevis sur l'électrovanne (ouverture manuelle), flexible jaune sur l'azote (${TEST} bar), manifold BP ouvert, puis isolez et attendez ${HOLD / 60} min.`, ['comp.solenoid', 'port.evap']],
     },
     {
       id: 'vac', label: 'Vidanger l\'azote et tirer la section au vide (< 2 mbar)', tiers: ['standard', 'examen'],
       done: (s) => !repl(s) || !!v(s).vacOk,
-      hints: ['Relâchez l\'azote par le manifold (flexible jaune libéré) jusqu\'à 0 bar.', 'Puis flexible jaune sur la pompe, manifold BP ouvert, pompe en marche jusqu\'à < 2 mbar.', ['port.evap']],
+      hints: ['Déposez le flexible jaune du détendeur azote (« déposer côté prise ») et ouvrez la vanne BP du manifold : l\'azote s\'échappe jusqu\'à 0 bar.', 'Puis flexible jaune sur la pompe, manifold BP ouvert, pompe en marche jusqu\'à < 2 mbar.', ['port.evap']],
     },
     {
       id: 'reopen', label: 'Rouvrir vanne gaz et vanne liquide, retirer l\'ouverture manuelle', tiers: ['standard', 'examen'],
       done: (s) => !repl(s) || (s.valves.gas !== 'front' && s.valves.liquid === 'open' && !s.valves.solenoid),
-      hints: ['Isolez la pompe d\'abord.', 'Vanne gaz en contre-siège arrière, vanne liquide ouverte, ouverture manuelle de l\'électrovanne retirée.', ['valve.gas', 'valve.liquid', 'comp.solenoid']],
+      hints: ['Isolez la pompe d\'abord.', 'Vanne gaz en contre-siège arrière, vanne liquide ouverte, ouverture manuelle de l\'électrovanne retirée (clé ou tournevis sur l\'électrovanne).', ['valve.gas', 'valve.liquid', 'comp.solenoid']],
     },
     {
       id: 'start', label: 'Déconsigner et remettre en marche', tiers: ['standard', 'examen'],
@@ -352,7 +357,7 @@ const L08: Level = {
     },
     {
       id: 'wrong-body', severity: 'major', skill: 'A1:9.02', lesson: 'composants',
-      message: 'Corps TE2 prévu pour un autre fluide : la charge du bulbe n\'a pas la bonne relation pression–température pour le R32, le détendeur alimente mal.',
+      message: 'Élément thermostatique prévu pour un autre fluide : la charge du bulbe n\'a pas la bonne relation pression–température pour le R32, le détendeur alimente mal.',
       when: ({ a }) => a.type === 'custom' && ['body-N', 'body-S', 'body-X'].includes(a.id),
     },
     {

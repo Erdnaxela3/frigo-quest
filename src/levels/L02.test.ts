@@ -55,9 +55,24 @@ describe('L02', () => {
     expect(ids(s)).toEqual(['sweep-too-fast']);
   });
 
-  it('declaring the detector false positive without soap → unconfirmed + false-declaration', () => {
+  it('declaring the detector false positive without soap → unconfirmed only', () => {
     const s = run(start('standard'), [{ type: 'answer', field: 'leak1', value: 1 /* joint.compSuction */ }]);
-    expect(ids(s)).toEqual(['unconfirmed', 'false-declaration']);
+    expect(ids(s)).toEqual(['unconfirmed']);
+  });
+
+  it('declaring the soaped false positive → false-declaration', () => {
+    const s = run(start('standard'), [
+      { type: 'measure', tool: 'soap', target: 'joint.compSuction' },
+      { type: 'answer', field: 'leak1', value: 1 /* joint.compSuction */ },
+    ]);
+    expect(ids(s)).toContain('false-declaration');
+    expect(ids(s)).not.toContain('unconfirmed');
+  });
+
+  it('R1234yf equipment: thresholds in kg (2024/573), not in t CO₂e', () => {
+    const s = start('examen');
+    Object.assign(s.vars, { eqFluid: 'R1234yf', eqKg: 25, eqLDS: false, eqHerm: false });
+    expect(run(s, [{ type: 'answer', field: 'freq', value: 2 /* 6 mois */ }]).answers.freq.ok).toBe(true);
   });
 
   it('false positive: detector alarms, soap shows no bubbles', () => {

@@ -11,7 +11,7 @@ const lesson: Lesson = {
   sections: [
     {
       title: 'L\'épreuve EP3 et son barème',
-      body: `L'épreuve **EP3 « Entretien, mise en service »** (unité UP3, coefficient 4) est une épreuve **pratique de 6 h** (à vérifier dans le règlement d'examen de ta session). Tu arrives devant une **chambre froide** dont le circuit est **sous pression d'azote**. Le barème national sur 100 points (à vérifier selon la session) :
+      body: `L'épreuve **EP3 « Entretien, mise en service »** (unité UP3, coefficient 4) est une épreuve **pratique de 6 h** en ponctuel (en CCF : trois situations d'évaluation). Tu arrives devant une **chambre froide** dont le circuit est **sous pression d'azote**. Le barème du sujet national (session 2019), sur 100 points :
 
 | Tâche | Points |
 |---|---|
@@ -21,7 +21,7 @@ const lesson: Lesson = {
 | **Réglage du pressostat BP** | **30** |
 | Fiches de relevés et documents | 20 |
 
-Le réglage du pressostat BP vaut à lui seul presque un tiers de la note : il faut le maîtriser parfaitement, et surtout savoir **vérifier les valeurs réelles au manifold**.`,
+Le sujet peut varier d'une session à l'autre, mais cette trame est la référence. Le réglage du pressostat BP vaut à lui seul presque un tiers de la note : il faut le maîtriser parfaitement, et surtout savoir **vérifier les valeurs réelles au manifold**.`,
     },
     {
       title: '1. Vidange de l\'azote et tirage au vide (15 pts)',
@@ -65,7 +65,7 @@ Exemple de consigne du jury : coupure 0,5 bar, enclenchement 2,0 bar.
 1. Calculer : différentiel = 2,0 − 0,5 = **1,5 bar**. Régler RANGE ≈ 2,0 et DIFF ≈ 1,5 sur les échelles.
 2. **Vérifier la coupure** : fermer la vanne de la ligne liquide (ou laisser le thermostat fermer l'électrovanne). Le compresseur continue de tourner et la BP baisse. Lire au manifold **la pression au moment exact où le compresseur s'arrête**.
 3. **Vérifier l'enclenchement** : rouvrir doucement la vanne. La BP remonte. Lire **la pression au moment où le compresseur redémarre**.
-4. Corriger par **quart de tour** et recommencer jusqu'à être à ± 0,2 bar des deux valeurs.
+4. Corriger par **quart de tour** (sur un KP1, un tour de la tige RANGE ≈ 0,7 bar, soit ≈ 0,17 bar par quart de tour) et recommencer jusqu'à être à ± 0,2 bar des deux valeurs.
 5. Noter les valeurs **mesurées** sur la fiche.
 
 Les échelles du pressostat sont **indicatives** (imprécision de quelques dixièmes de bar) : le jury contrôle les valeurs réelles. Attention au **différentiel trop faible** : le compresseur fait des courts cycles. Si le sujet le demande, régler aussi le thermostat (consigne et différentiel) et observer un cycle complet.
@@ -97,7 +97,7 @@ Une fiche lisible, complète, avec les **unités** et des valeurs **cohérentes*
     },
     {
       title: 'À retenir pour l\'examen',
-      body: `- Barème EP3 : 15 vide, 20 charge, 15 remise en marche, **30 pressostat BP**, 20 relevés (à vérifier).
+      body: `- Barème EP3 (sujet national 2019) : 15 vide, 20 charge, 15 remise en marche, **30 pressostat BP**, 20 relevés.
 - Pompe à vide seulement à 0 bar rel ; vacuomètre côté circuit ; isoler avant d'arrêter la pompe ; test de remontée : plateau = humidité, linéaire = fuite.
 - Charge à la **balance**, mélange zéotrope en **liquide**, complément côté BP lentement.
 - KP1 : **RANGE = enclenchement**, coupure = enclenchement − différentiel.

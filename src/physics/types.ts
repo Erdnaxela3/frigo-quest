@@ -5,7 +5,7 @@ export type FluidId = 'R32' | 'R410A' | 'R134a' | 'R290' | 'R1234yf' | 'R404A' |
 export interface Fluid {
   id: FluidId;
   name: string;
-  gwp: number; // AR4 values, as on French paperwork
+  gwp: number; // Regulation (EU) 2024/573 values: AR4 for saturated HFCs, newer values for HFOs/HCs
   safety: 'A1' | 'A2L' | 'A3';
   glide: number; // K, nominal
   molarMass: number; // g/mol

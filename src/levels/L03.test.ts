@@ -50,6 +50,21 @@ describe('L03', () => {
     expect(s.mistakes.map((m) => m.id)).toContain('solenoid-closed');
   });
 
+  it('straight to the strength pressure without a first step → no-palier', () => {
+    const s = run(start('examen'), [
+      { type: 'custom', id: 'gas-n2' }, { type: 'custom', id: 'solenoid' },
+      { type: 'toggleCap', target: 'port.hp' },
+      { type: 'connectHose', hose: 'red', end: 'port', socket: 'port.hp' },
+      { type: 'connectHose', hose: 'yellow', end: 'port', socket: 'n2' },
+      { type: 'toggleManifold', valve: 'hp' },
+      { type: 'setN2', setpoint: 34 },
+      { type: 'device', device: 'n2', on: true },
+      { type: 'wait', seconds: 120 },
+    ]);
+    expect(s.valves.solenoid).toBe(true);
+    expect(s.mistakes.map((m) => m.id)).toContain('no-palier');
+  });
+
   it('standard: the sun masks the leak, P2 > P1, "étanche" → no-temp-correction', () => {
     const s = playVerdict('standard', 0);
     expect(s.answers.P2.value).toBeGreaterThan(s.answers.P1.value);

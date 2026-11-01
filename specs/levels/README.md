@@ -28,7 +28,7 @@ Scenes:
   - copper lines drawn on the board (liquid ¼", suction ⅜"), clamps, fixed manometers optional, electrical box at the bottom (sectionneur, contacteur, transfo 24 V) — wiring is lessons-only for now;
   - charge 1.2 kg R32 (GWP 675 → 0.81 t CO₂e — below the 5 t threshold, used in L02 to teach the exemption; the CF scene covers the "checks required" case).
   Levels L01–L09, L11, L12 use PLATINE by default; CF is the alternative scene where noted.
-- **CF** — chambre froide positive (+2 °C), groupe de condensation hermétique, réservoir liquide, vannes de service 3 voies BP/HP, vanne départ liquide, filtre déshydrateur, voyant, électrovanne, détendeur thermostatique Danfoss TE2, évaporateur ventilé, pressostats KP1/KP5, thermostat. Fluid R449A (GWP 1397) or R404A (legacy, GWP 3922). Charge 6 kg. Mirrors the CAP EP3 bench.
+- **CF** — chambre froide positive (+2 °C), groupe de condensation hermétique, réservoir liquide, vannes de service 3 voies BP/HP, vanne départ liquide, filtre déshydrateur, voyant, électrovanne, détendeur thermostatique Danfoss TE2, évaporateur ventilé, pressostats KP1/KP5, thermostat. Fluid R449A (GWP 1396) or R404A (legacy, GWP 3922). Charge 6 kg. Mirrors the CAP EP3 bench.
 - **SPLIT** — split mural R32 3.5 kW, unité extérieure avec vannes 2 voies (liquide) / 3 voies (gaz) + Schrader, précharge 1.1 kg pour 7.5 m.
 - **R290** — vitrine réfrigérée plug-in R290, 150 g, tubes de process.
 - **BANC** — établi (bouteilles, station, balance) for L00 and parts of L05.

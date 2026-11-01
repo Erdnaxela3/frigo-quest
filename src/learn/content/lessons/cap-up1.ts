@@ -7,7 +7,7 @@ const lesson: Lesson = {
   sections: [
     {
       title: 'L\'épreuve EP1',
-      body: `L'épreuve **EP1 « Préparation d'une réalisation »** (unité UP1, coefficient 2) est une épreuve **écrite de 3 h** en forme ponctuelle (à vérifier dans le règlement d'examen de ta session). À partir d'un **dossier technique** (une chambre froide, une installation de climatisation…), tu dois :
+      body: `L'épreuve **EP1 « Préparation d'une réalisation »** (unité UP1, coefficient 2) est une épreuve **écrite de 3 h** en forme ponctuelle ; en lycée ou en CFA habilité, elle est évaluée en **CCF** (deux situations, en 1re et en 2e année). À partir d'un **dossier technique** (une chambre froide, une installation de climatisation…), tu dois :
 
 - lire et exploiter les plans et schémas ;
 - établir des **quantitatifs** (longueurs de tube, raccords, accessoires) ;
@@ -88,7 +88,7 @@ Dans la réponse, **justifie** : « Je choisis le filtre X car il est prévu pou
       title: 'Préparer et sécuriser l\'intervention',
       body: `- **Liste d'outillage** : manifold, pompe à vide et vacuomètre, balance, station de récupération, bouteille d'azote avec détendeur, chalumeau, coupe-tube, ébavureur, cintreuse, dudgeonnière, clé dynamométrique, multimètre, pince ampèremétrique, détecteur de fuites.
 - **EPI** : lunettes, gants (froid et chaleur), chaussures de sécurité, protection auditive si besoin.
-- **Électricité** : intervenir avec une **habilitation** adaptée (par exemple BR pour le dépannage, BC pour la consignation selon la NF C 18-510, à vérifier selon ton employeur) et **consigner** avant tout travail.
+- **Électricité** : intervenir avec une **habilitation** adaptée (NF C 18-510) et **consigner** avant tout travail. Le référentiel du CAP vise le niveau **B1V** (exécutant de travaux électriques, y compris au voisinage) ; en entreprise, un frigoriste dépanneur reçoit souvent **BR** (intervention BT générale) et **BC** (consignation). C'est l'employeur qui délivre l'habilitation.
 - **Travaux par points chauds** : permis de feu si le site l'exige, extincteur, protection des matériaux combustibles.
 - **Coactivité** : se coordonner avec les autres corps de métier (plan de prévention sur un site client).
 - **Environnement** : prévoir les bouteilles de récupération, le tri des déchets (huile, cuivre, emballages), la fiche d'intervention.
@@ -96,7 +96,7 @@ Dans la réponse, **justifie** : « Je choisis le filtre X car il est prévu pou
     },
     {
       title: 'À retenir pour l\'examen',
-      body: `- EP1 = écrit de 3 h sur dossier technique (à vérifier) : lecture, quantitatif, choix, préparation.
+      body: `- EP1 = écrit de 3 h (coef 2) sur dossier technique, ou CCF : lecture, quantitatif, choix, préparation.
 - Échelle : 1/50 → 1 cm = 50 cm. Cote écrite > mesure à la règle.
 - Schéma frigorifique : suivre le fluide refoulement → condenseur → liquide → détendeur → évaporateur → aspiration.
 - Quantitatif : longueurs par diamètre + chute, raccords, supports, isolant, accessoires, consommables ; arrondir au-dessus.

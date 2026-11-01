@@ -419,7 +419,7 @@ export const QUESTIONS_CAP: Question[] = [
     prompt: 'Quel niveau d\'habilitation électrique correspond à un frigoriste qui réalise dépannages, mesures et remplacements dans les armoires basse tension ?',
     choices: ['BR', 'B0', 'H2V', 'BE manœuvre'],
     answer: 0,
-    explain: 'BR = chargé d\'intervention BT générale (dépannage, mesurage, essais). B0 autorise seulement des travaux non électriques en zone électrique ; H concerne la haute tension.',
+    explain: 'BR = chargé d\'intervention BT générale (dépannage, mesurage, essais). B0 autorise seulement des travaux non électriques en zone électrique ; H concerne la haute tension. Le référentiel du CAP IFCA vise le niveau B1V (exécutant de travaux électriques).',
     confidence: 'ok',
   },
 

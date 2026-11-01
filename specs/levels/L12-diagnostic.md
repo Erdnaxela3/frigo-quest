@@ -22,7 +22,7 @@ Undercharge (leak) · overcharge · non-condensables · condenser fouled · cond
 |---|---|
 | 1 Guidé | Single-cause faults, signature table visible |
 | 2 Standard | Table hidden; cause list includes look-alikes |
-| 3 Examen | Two simultaneous faults in some scenarios; 30 min budget for 5 scenarios |
+| 3 Examen | Two simultaneous faults in some scenarios; 40 min budget for 5 scenarios (actions cost sim time) |
 
 ## Mistakes
 | id | Sev. | Trigger | Feedback |

@@ -1,9 +1,9 @@
-import { FLUIDS, leakCheckMonths, tco2e } from '../physics/refrigerants';
+import { FLUIDS, leakCheckFor, tco2e } from '../physics/refrigerants';
 import type { FluidId } from '../physics/types';
 import { makePlatine } from '../game/platineModel';
 import { fmt, refuse } from '../game/engine';
 import { JOINTS, type JointId } from '../game/sceneIds';
-import type { AnswerField, GameState, Level, Rule, Severity, Step, Tier } from '../game/types';
+import type { AnswerField, GameState, Level, Rule, RuleAction, Severity, Step, Tier } from '../game/types';
 
 const JOINT_IDS = Object.keys(JOINTS) as JointId[];
 const NO_LOC = JOINT_IDS.length;
@@ -14,7 +14,7 @@ const LEAK_RESULTS = ['Pas de fuite constatée', 'Fuite constatée et réparée'
 const L = { none: 0, repaired: 1, open: 2, na: 3 };
 const CHARGED_TYPES = ['Recyclé', 'Vierge', 'Régénéré', 'Sans objet (aucune charge)'];
 const FREQ = ['3 mois', '6 mois', 'Non soumis (< 5 t CO₂e)', '12 mois', '24 mois'];
-const STICKERS = ['Marquage rouge « défaut d\'étanchéité »', 'Aucune étiquette', 'Étiquette bleue avec date du prochain contrôle'];
+const STICKERS = ['Marquage rouge « défaut d\'étanchéité »', 'Aucune étiquette', 'Pastille bleue avec la date limite du contrôle'];
 const FLUID_CHOICES: FluidId[] = ['R410A', 'R32', 'R134a', 'R290', 'R1234yf'];
 
 const HEADER = 'Opérateur : J. Martin, attestation d\'aptitude cat. I n° AP-58213. Entreprise FroidService, '
@@ -76,9 +76,9 @@ export const EXAM_REPORTS = ['ecart', 'fuite', 'demantelement'];
 
 const EQUIPMENTS = ['chambre froide', 'vitrine réfrigérée', 'groupe d\'eau glacée', 'pompe à chaleur'];
 const rep = (s: GameState) => REPORTS[s.vars.report as string];
-const boardMonths = (s: GameState) => leakCheckMonths(tco2e(s.fluid, s.plant.nominalCharge));
+const boardMonths = (s: GameState) => leakCheckFor(s.fluid, s.plant.nominalCharge);
 const freqIndex = (m: number | null) => (m === null ? 2 : FREQ.indexOf(`${m} mois`));
-const eq2Index = (s: GameState) => freqIndex(leakCheckMonths(tco2e(s.vars.eqFluid as FluidId, s.vars.eqKg as number), !!s.vars.eqLDS));
+const eq2Index = (s: GameState) => freqIndex(leakCheckFor(s.vars.eqFluid as FluidId, s.vars.eqKg as number, !!s.vars.eqLDS));
 
 interface Field extends AnswerField { mistake: string; severity: Severity; skill: string; message: string }
 const choice = (id: string, label: string, choices: string[], expected: (s: GameState) => number,
@@ -117,17 +117,17 @@ const FIELDS: Field[] = [
     'wrong-frequency', 'major', 'A1:2.02', 'Périodicité erronée : < 5 t CO₂e non soumis ; 5–50 t → 12 mois, 50–500 t → 6 mois, ≥ 500 t → 3 mois ; doublée avec détection permanente.'),
   choice('nextCheck2', 'Équipement n°2 du détenteur : périodicité', FREQ, eq2Index,
     'wrong-frequency-eq2', 'major', 'A1:2.02', 'Périodicité de l\'équipement n°2 erronée : t CO₂e = kg × PRP / 1000 ; 5 / 50 / 500 t → 12 / 6 / 3 mois, doublée avec détection permanente.', ['examen']),
-  choice('sticker', 'Étiquetage de l\'équipement (à vérifier)', STICKERS,
+  choice('sticker', 'Étiquetage de l\'équipement', STICKERS,
     (s) => (rep(s).leak === L.open ? 0 : boardMonths(s) === null ? 1 : 2),
-    'wrong-sticker', 'minor', 'A1:4.09', 'Étiquetage : rouge « défaut d\'étanchéité » si une fuite reste non réparée ; bleue datée pour un équipement soumis au contrôle périodique ; sinon rien.'),
-  choice('cylinderPath', 'Bouteille de récupération : suivi (à vérifier)',
+    'wrong-sticker', 'minor', 'A1:4.09', 'Étiquetage : rouge « défaut d\'étanchéité » si une fuite reste non réparée ; pastille bleue datée pour un équipement soumis au contrôle périodique ; sinon rien.'),
+  choice('cylinderPath', 'Bouteille de récupération : suivi',
     ['Stockée à l\'atelier, sans document', 'Retour distributeur, BSFF créé sur Trackdéchets (n° bouteille, fluide, masse)', 'Laissée au client', 'Déchetterie'], () => 1,
     'wrong-cylinder-path', 'minor', 'A1:8.10', 'La bouteille de récupération retourne au distributeur avec un bordereau de suivi des fluides frigorigènes (BSFF, Trackdéchets).'),
   choice('oilPath', 'Huile souillée : filière',
     ['Versée dans la bouteille de récupération', 'Réseau d\'eaux usées', 'Déchet dangereux : bidon étanche étiqueté, filière agréée avec bordereau', 'Ordures ménagères'], () => 2,
     'wrong-oil-path', 'minor', 'A1:8.10', 'Huile de machine frigorifique usagée = déchet dangereux : bidon étanche étiqueté, collecte par une filière agréée.'),
-  choice('archive', 'Conservation de la fiche (à vérifier)', ['1 an', '3 ans', '5 ans', '10 ans'], () => 2,
-    'wrong-archive', 'minor', 'A1:4.09', 'Fiche d\'intervention conservée 5 ans par le détenteur et par l\'opérateur.'),
+  choice('archive', 'Conservation de la fiche', ['1 an', '3 ans', '5 ans', '10 ans'], () => 2,
+    'wrong-archive', 'minor', 'A1:4.09', 'Fiche d\'intervention conservée au moins 5 ans par le détenteur et par l\'opérateur (R. 543-82).'),
 ];
 
 const fieldsFor = (s: GameState) => FIELDS.filter((f) => !f.tiers || f.tiers.includes(s.tier));
@@ -150,15 +150,19 @@ function reportText(s: GameState) {
   return t;
 }
 
+// examen: fields are judged at signing, so a mistake toast never reveals a wrong field before then
+const judged = (a: RuleAction, s: GameState, field: string) =>
+  (s.tier === 'examen' ? a.type === 'custom' && a.id === 'sign' && !!s.vars.signed : a.type === 'answer' && a.field === field);
+
 const rules: Rule[] = [
   ...FIELDS.map((f): Rule => ({
     id: f.mistake, severity: f.severity, skill: f.skill, lesson: 'reglementation', message: f.message,
-    when: ({ a, s }) => a.type === 'answer' && a.field === f.id && !s.answers[f.id].ok && !(f.id === 'balance' && !rep(s).balanceOk),
+    when: ({ a, s }) => judged(a, s, f.id) && !s.answers[f.id].ok && !(f.id === 'balance' && !rep(s).balanceOk),
   })),
   {
     id: 'missing-leak-declaration', severity: 'major', skill: 'A1:4.09', lesson: 'etancheite',
     message: 'Les pesées ne bouclent pas (récupéré nettement inférieur à la charge nominale) sans fuite déclarée : il faut signaler une fuite présumée et programmer une recherche de fuite.',
-    when: ({ a, s }) => a.type === 'answer' && a.field === 'balance' && !rep(s).balanceOk && !s.answers.balance.ok,
+    when: ({ a, s }) => judged(a, s, 'balance') && !rep(s).balanceOk && !s.answers.balance.ok,
   },
 ];
 
@@ -170,9 +174,8 @@ const L14: Level = {
   scene: 'PLATINE',
   fluid: 'R32',
   briefing: 'L\'intervention sur la platine split R32 est terminée (unité à l\'arrêt). Lisez le compte rendu d\'intervention, '
-    + 'remplissez la fiche d\'intervention (inspirée du Cerfa 15497*04, liste des champs à vérifier), décidez du suivi de la bouteille '
-    + 'de récupération et de l\'huile usagée, puis signez. Les points marqués « à vérifier » reposent sur des sources non revérifiées '
-    + '(BSFF sur Trackdéchets, conservation 5 ans, étiquetage).',
+    + 'remplissez la fiche d\'intervention conforme au Cerfa 15497*04, décidez du suivi de la bouteille '
+    + 'de récupération et de l\'huile usagée, puis signez.',
   tierNotes: {
     guide: 'Réparation de fuite ; repères de remplissage dans le compte rendu, champs corrigés en direct.',
     standard: 'Remplacement de compresseur : récupération puis charge, pesées à exploiter.',
@@ -184,6 +187,7 @@ const L14: Level = {
   setup(tier, rng) {
     const pick = <T,>(xs: readonly T[]) => xs[Math.floor(rng() * xs.length)];
     const s = makePlatine({ levelId: 'L14', tier, running: false });
+    s.hoses = [];
     const report = tier === 'examen' ? pick(EXAM_REPORTS) : tier;
     s.vars = { report };
     if (REPORTS[report].stain) s.oilStains = [REPORTS[report].stain!];
@@ -206,7 +210,7 @@ const L14: Level = {
     {
       id: 'fill', label: 'Remplir tous les champs de la fiche',
       done: allAnswered,
-      hints: ['Masses : différences de pesées. t CO₂e = charge nominale × PRP / 1000. Comparez récupéré et charge nominale.',
+      hints: ['Le compte rendu reste lisible dans le Journal. Masses : différences de pesées. t CO₂e = charge nominale × PRP / 1000. Comparez récupéré et charge nominale.',
         'R32 : PRP 675 → 0,81 t CO₂e, non soumis au contrôle périodique. Bouteille de récupération → distributeur + BSFF ; huile → déchet dangereux ; conservation 5 ans.'],
     },
     {
@@ -224,7 +228,7 @@ const L14: Level = {
   rules,
 
   actions: [
-    { id: 'read', label: 'Lire le compte rendu d\'intervention' },
+    { id: 'read', label: (s) => (s.vars.read ? 'Relire le compte rendu d\'intervention (aussi dans le Journal)' : 'Lire le compte rendu d\'intervention') },
     { id: 'sign', label: 'Signer la fiche', visible: (s) => !!s.vars.read && !s.vars.signed },
   ],
 
@@ -238,7 +242,7 @@ const L14: Level = {
     if (a.id === 'sign') {
       if (!allAnswered(s)) refuse('Remplissez tous les champs avant de signer.');
       s.vars.signed = true;
-      return `Fiche signée : ${Math.round(correctRatio(s) * 100)} % des champs justes.`;
+      return `Fiche signée par l'opérateur (signature du détenteur non requise sous 5 t CO₂e) : ${Math.round(correctRatio(s) * 100)} % des champs justes.`;
     }
   },
 

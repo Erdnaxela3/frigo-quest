@@ -32,17 +32,17 @@ const later = (s: GameState, min: number) => { s.t += min * 60; };
 const MEASURES: Record<Variant, { ohm: string; insul: string; km: string }> = {
   dead: {
     ohm: 'C-R 2,4 Ω · C-S 3,6 Ω · R-S 6,0 Ω (R-S = C-R + C-S : enroulements sains)',
-    insul: 'isolement bornes / masse sous 500 V : > 200 MΩ (bon)',
+    insul: 'bornes / masse sous 500 V : > 200 MΩ (bon)',
     km: 'contacts de puissance propres, bobine 230 V OK. À l\'essai, le compresseur grogne, intensité de rotor bloqué ≈ 28 A, puis le protecteur thermique déclenche',
   },
   burnt: {
     ohm: 'C-R 1,1 Ω · C-S 3,6 Ω · R-S 4,2 Ω (R-S ≠ C-R + C-S : spires en court-circuit)',
-    insul: 'isolement borne C / masse sous 500 V : 0,3 MΩ (< 2 MΩ : bobinage à la masse)',
+    insul: 'borne C / masse sous 500 V : 0,3 MΩ (< 2 MΩ : bobinage à la masse)',
     km: 'contacts légèrement noircis par le court-circuit, bobine 230 V OK. Le disjoncteur moteur déclenche dès la mise sous tension',
   },
   contactor: {
     ohm: 'C-R 2,4 Ω · C-S 3,6 Ω · R-S 6,0 Ω (R-S = C-R + C-S : enroulements sains)',
-    insul: 'isolement bornes / masse sous 500 V : > 200 MΩ (bon)',
+    insul: 'bornes / masse sous 500 V : > 200 MΩ (bon)',
     km: 'contacts de puissance piqués et charbonnés, un pôle ne ferme plus : chute de 40 V à l\'appel, le compresseur ne reçoit qu\'une partie de la tension',
   },
 };
@@ -64,7 +64,7 @@ const L10: Level = {
   fluid: 'R32',
   briefing: 'Le compresseur de la platine a disjoncté, odeur de brûlé au coffret, unité arrêtée. Consignez, diagnostiquez (enroulements, isolement, contacteur), '
     + 'testez l\'acidité de l\'huile, récupérez la charge dans la bonne bouteille, déposez le compresseur et éliminez son huile, posez le compresseur neuf '
-    + '(huile POE pour le R32, plots antivibratiles), les filtres, faites l\'essai azote, le triple tirage au vide, chargez au poids, remettez en service '
+    + '(huile POE pour le R32, plots antivibratiles), les filtres, faites l\'essai azote, le triple tirage au vide, chargez au poids, remettez en service (intensité, niveau d\'huile) '
     + 'et refaites un test d\'acidité après 48 h. Renseignez la fiche (fluide récupéré, quantité d\'huile).',
   tierNotes: {
     guide: 'Compresseur bloqué mécaniquement, moteur sain, huile claire : pas de filtre burn-out obligatoire.',
@@ -110,7 +110,7 @@ const L10: Level = {
       id: 'diag', label: 'Diagnostic électrique : enroulements, isolement, contacteur, conclusion',
       done: (s) => v(s, 'ohm') && v(s, 'insul') && v(s, 'km') && ok(s, 'diag'),
       hints: ['Moteur sain : R-S = C-R + C-S et isolement > 2 MΩ. Ne concluez pas avant d\'avoir tout mesuré.',
-        'Commandes « Multimètre : enroulements », « Mégohmmètre : isolement », « Examiner le contacteur KM1 », puis choisissez le diagnostic.'],
+        'Commandes « Multimètre : résistances des enroulements », « Mégohmmètre : isolement », « Examiner le contacteur KM1 », puis choisissez le diagnostic (Relevés).'],
     },
     {
       id: 'acidOld', label: 'Prélever l\'huile du compresseur : test d\'acidité',
@@ -132,11 +132,11 @@ const L10: Level = {
     {
       id: 'disconnect', label: 'Fermer la bouteille et déposer les flexibles',
       done: (s) => contactor(s) || (!!s.bench.cylinder && !s.bench.cylinder.gas && !onBoard(s) && !onCyl(s) && !s.bench.recovery!.on),
-      hints: ['Station arrêtée, bouteille fermée avant de déposer son flexible.', 'Arrêtez la station, fermez la vanne gaz de la bouteille, déposez les flexibles.'],
+      hints: ['Station arrêtée, bouteille fermée avant de déposer son flexible.', 'Arrêtez la station, fermez la vanne gaz de la bouteille et la vanne à boule du flexible « rec », puis déposez les flexibles côté prise.'],
     },
     {
       id: 'remove', label: 'Déposer le compresseur et vidanger son huile dans le bidon « huiles usagées »',
-      done: (s) => contactor(s) || (v(s, 'removed') && s.vars.drained === 'waste'),
+      done: (s) => contactor(s) || (v(s, 'removed') && !!s.vars.drained),
       hints: ['Une huile chargée de fluide (et acide) est un déchet dangereux.', 'Commandes « Déposer le compresseur », puis « Vidanger l\'huile dans le bidon étiqueté ».'],
     },
     {
@@ -148,7 +148,7 @@ const L10: Level = {
     {
       id: 'filters', label: 'Braser le filtre déshydrateur liquide neuf (et le filtre burn-out d\'aspiration si l\'huile est acide)',
       done: (s) => contactor(s) || (v(s, 'liqFilter') && (variant(s) === 'dead' || v(s, 'burnout'))),
-      hints: ['Le filtre burn-out piège l\'acide et les boues côté aspiration, avant le compresseur neuf.', 'Commandes « Braser le filtre burn-out » et « Braser le filtre déshydrateur ».'],
+      hints: ['Le filtre burn-out piège l\'acide et les boues côté aspiration, avant le compresseur neuf.', 'Commandes « Braser un filtre burn-out sur l\'aspiration » (huile acide) et « Braser un filtre déshydrateur liquide neuf ».'],
     },
     {
       id: 'n2', label: 'Essai de pression à l\'azote',
@@ -178,12 +178,12 @@ const L10: Level = {
     {
       id: 'retest', label: 'Après 48 h de fonctionnement : test d\'acidité négatif (sinon changer les filtres)',
       done: (s) => contactor(s) || v(s, 'acidNeg'),
-      hints: ['Une acidité résiduelle détruira le compresseur neuf.', '« Test d\'acidité à 48 h ». Positif : arrêtez, consignez, « Remplacer les filtres », redémarrez et refaites le test.'],
+      hints: ['Une acidité résiduelle détruira le compresseur neuf.', '« Attendre 48 h de fonctionnement, test d\'acidité ». Positif : arrêtez, consignez, « Remplacer les filtres », déconsignez, redémarrez et refaites le test.'],
     },
     {
       id: 'record', label: 'Fiche d\'intervention : destination du fluide, quantité d\'huile',
       done: (s) => v(s, 'recorded'),
-      hints: ['Fluide d\'un moteur grillé = fluide contaminé, il n\'est pas réutilisé.', 'Choisissez la destination, saisissez la quantité d\'huile vidangée, puis « Renseigner la fiche ».'],
+      hints: ['Fluide propre : rechargé en neuf, la bouteille repart chez le distributeur (régénération). Fluide d\'un moteur grillé = contaminé : destruction / régénération.', 'Relevés : choisissez la destination, saisissez la quantité d\'huile vidangée (mL), puis « Renseigner la fiche d\'intervention ».'],
     },
   ],
 

@@ -192,7 +192,7 @@ export const EP1_QUESTIONS: Question[] = [
     id: 'ep1-tco2e', skills: ['CAP:UP1.quantitatif', 'A1:2.02'], confidence: 'ok',
     prompt: 'Quelle est la charge totale exprimée en tonnes équivalent CO₂ (3 décimales) ?',
     answer: { value: 0.533, tol: 0.003 }, unit: 't CO₂e',
-    explain: '0,79 kg × 675 / 1000 ≈ 0,533 t CO₂e : sous le seuil de 5 t CO₂e, pas de contrôle d\'étanchéité périodique obligatoire (mais contrôle à la mise en service).',
+    explain: '0,79 kg × 675 / 1000 ≈ 0,533 t CO₂e : sous le seuil de 5 t CO₂e, pas de contrôle d\'étanchéité périodique, ni de contrôle réglementaire à la mise en service (art. R. 543-79, au-delà de 5 t). L\'essai de pression à l\'azote avant la charge reste indispensable.',
   }),
   S({
     id: 'ep1-surface-mini', skills: ['CAP:UP1.dossier', 'A1:1.08'], confidence: 'secondary',
@@ -393,6 +393,6 @@ export const EP1_QUESTIONS: Question[] = [
       'Le permis de feu',
     ],
     answer: 0,
-    explain: 'Toute manipulation de fluide se trace sur la fiche d\'intervention (quantité chargée, fluide, bouteille utilisée), même sous le seuil de contrôle périodique.',
+    explain: 'Toute manipulation de fluide se trace sur la fiche d\'intervention (quantité chargée, fluide, bouteille utilisée), même sous le seuil de contrôle périodique (art. R. 543-82). Sous 5 t CO₂e, la signature du détenteur n\'est pas exigée. La fiche est conservée 5 ans.',
   }),
 ];

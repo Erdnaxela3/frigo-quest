@@ -113,6 +113,20 @@ describe('L12', () => {
     expect(ids(run(s, [{ type: 'answer', field: 'diag', value: cur(s).c[0] }]))).toEqual(['no-sh-sc']);
   });
 
+  it('guide: liquid temperature taken at the liquid service valve counts for SC', () => {
+    const s = run(withPlan(start(), [scen([3]), scen([0]), scen([1]), scen([7]), scen([5])]), [
+      { type: 'inspect', target: 'comp.condenser' },
+      { type: 'toggleCap', target: 'port.lp' }, { type: 'toggleCap', target: 'port.hp' }, { type: 'toggleCap', target: 'valve.gas' },
+      { type: 'connectHose', hose: 'blue', end: 'port', socket: 'port.lp' },
+      { type: 'connectHose', hose: 'red', end: 'port', socket: 'port.hp' },
+      { type: 'setServiceValve', valve: 'valve.gas', pos: 'mid' },
+      { type: 'measure', tool: 'thermometer', target: 'comp.txvBulb' },
+      { type: 'measure', tool: 'thermometer', target: 'valve.liquid' },
+      { type: 'answer', field: 'diag', value: 3 },
+    ]);
+    expect(ids(s)).toEqual([]);
+  });
+
   it('connecting the manifold before looking at a dead fan → connect-first', () => {
     const s = withPlan(start('standard'), [scen([4]), scen([1]), scen([2]), scen([3]), scen([0])]);
     const r = run(s, [{ type: 'toggleCap', target: 'port.lp' }, { type: 'connectHose', hose: 'blue', end: 'port', socket: 'port.lp' }]);

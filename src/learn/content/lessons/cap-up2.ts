@@ -10,12 +10,12 @@ const lesson: Lesson = {
   sections: [
     {
       title: 'L\'épreuve EP2',
-      body: `L'épreuve **EP2 « Réalisation d'une installation »** (unité UP2) a le plus gros coefficient du CAP : **6, dont 1 pour la PSE**, pour **8 h dont 1 h de PSE** en forme ponctuelle (à vérifier dans le règlement d'examen de ta session). Elle comporte deux parties pratiques :
+      body: `L'épreuve **EP2 « Réalisation d'une installation »** (unité UP2) a le plus gros coefficient du CAP. Le règlement d'examen de 2015 indique **coefficient 6 dont 1 pour la PSE** et **8 h dont 1 h de PSE** en ponctuel ; la partie professionnelle seule dure donc **7 h, coefficient 5** (c'est ce qu'affichent les sujets nationaux). Depuis la réforme du CAP (sessions 2021 et suivantes), la PSE est évaluée dans une unité à part (coefficient 1, écrit d'1 h en ponctuel) et la note du **chef-d'œuvre** (coefficient 1) est intégrée à l'épreuve professionnelle de plus fort coefficient. En lycée ou en CFA habilité, l'EP2 est évaluée en CCF. Elle comporte deux parties pratiques :
 
 - **partie fluidique** : réaliser une **platine** frigorifique en cuivre et la tester à l'azote ;
 - **partie électrique** : câbler un **circuit de commande** (contacteurs, transformateur 230/24 V, voyants, arrêt d'urgence).
 
-S'y ajoute l'évaluation de **Prévention Santé Environnement**.`,
+S'y ajoute l'évaluation de **Prévention Santé Environnement** (unité distincte depuis la réforme).`,
     },
     {
       title: 'Partie fluidique : la platine',
@@ -110,7 +110,7 @@ Il fournit une **très basse tension** pour la commande : moins de risque pour l
 4. **Vérifier l'absence de tension** (VAT) avec un appareil adapté, testé avant et après.
 5. Mise à la terre et en court-circuit lorsqu'elle est requise.
 
-On ne travaille sur une installation électrique qu'avec une **habilitation** correspondant à l'opération (à vérifier selon ton employeur).`,
+On ne travaille sur une installation électrique qu'avec une **habilitation** correspondant à l'opération, délivrée par l'employeur. Le référentiel du CAP vise le niveau **B1V** ; un dépanneur a besoin de **BR**, et de **BC** s'il consigne lui-même.`,
     },
     {
       title: 'PSE : prévention santé environnement',
@@ -129,7 +129,7 @@ La démarche attendue : **identifier le danger**, la **situation dangereuse**, l
     },
     {
       title: 'À retenir pour l\'examen',
-      body: `- EP2 : platine cuivre + test azote, puis câblage d'un circuit de commande ; PSE incluse (coef 6 dont 1, 8 h dont 1 h, à vérifier).
+      body: `- EP2 : platine cuivre + test azote, puis câblage d'un circuit de commande ; partie professionnelle 7 h, coef 5 (6 dont 1 de PSE, 8 h dont 1 h dans le règlement de 2015).
 - Puissance = moteur ; commande = bobines, boutons, sécurités, voyants, souvent en 24 V.
 - Q disjoncteur/sectionneur, KM contacteur, F relais thermique ou fusible, S bouton, H voyant, T transformateur.
 - Auto-maintien : contact **13-14 de KM** en parallèle sur le bouton marche.

@@ -27,17 +27,19 @@ La nouvelle attestation **A1** couvre les gaz fluorés **et les hydrocarbures**.
 | 2 | inflammable |
 | 3 | très inflammable |
 
-| Fluide | Classe | PRP (valeurs de l'application) | Remarque |
+| Fluide | Classe | PRP (règlement 2024/573) | Remarque |
 |---|---|---|---|
 | R134a | A1 | 1430 | HFC de référence |
-| R449A | A1 | 1397 | mélange HFC/HFO, glissement ≈ 4,5 K |
+| R449A | A1 | 1396 (souvent affiché 1397) | mélange HFC/HFO, glissement ≈ 4 à 5 K |
 | R32 | A2L | 675 | splits récents |
-| R1234yf | A2L | 4 | HFO, climatisation auto |
-| R290 (propane) | A3 | 3 | vitrines, PAC monobloc |
+| R1234yf | A2L | 0,501 (4 dans les anciennes fiches) | HFO, climatisation auto |
+| R290 (propane) | A3 | 0,02 (3 dans les anciennes fiches) | vitrines, PAC monobloc |
 | R744 (CO₂) | A1 | 1 | haute pression, transcritique |
 | R717 (NH₃) | B2L | 0 | toxique, industrie |
 
-La **LFL** (limite inférieure d'inflammabilité) est la concentration minimale qui peut s'enflammer : 0,038 kg/m³ pour le R290, environ 0,307 kg/m³ pour le R32.`,
+Le règlement F-gas garde pour les HFC saturés (R134a, R32, R125…) les PRP du 4e rapport du GIEC (AR4) ; pour les HFO et les hydrocarbures, il retient des valeurs plus récentes, d'où les PRP quasi nuls du R1234yf et du R290.
+
+La **LFL** (limite inférieure d'inflammabilité) est la concentration minimale qui peut s'enflammer : 0,038 kg/m³ pour le R290, 0,289 kg/m³ pour le R1234yf, 0,307 kg/m³ pour le R32.`,
     },
     {
       title: 'Les familles en détail (1.07, 11.04)',
@@ -84,7 +86,7 @@ R290 (propane), R600a (isobutane, réfrigérateurs domestiques), R1270 (propylè
     },
     {
       title: 'Limites de charge et d\'occupation (1.08)',
-      body: `Pour un fluide inflammable, la charge maximale dépend du **volume du local**, de la **hauteur d'installation** et de la **LFL**. Les seuils de la norme EN 378 utilisés dans l'application (à vérifier dans la version en vigueur de la norme) :
+      body: `Pour un fluide inflammable, la charge maximale dépend du **volume du local**, de la **hauteur d'installation** et de la **LFL**. Les seuils de la norme EN 378-1 (annexe C) :
 
 | Seuil | Formule | R290 |
 |---|---|---|
@@ -100,7 +102,9 @@ avec h₀ la hauteur d'installation : 0,6 m au sol, 1,0 m en fenêtre, 1,8 m au 
 
 Exemple : split R290 mural (h₀ = 1,8 m) dans une chambre de 12 m² : m_max ≈ 2,5 × 0,0168 × 1,8 × 3,46 ≈ **0,26 kg**. Un appareil chargé à 0,4 kg ne convient pas à cette pièce.
 
-Pour les meubles frigorifiques commerciaux (IEC 60335-2-89), la limite historique de **150 g** de R290 par circuit a évolué vers environ **13 × LFL ≈ 494 g** (à vérifier selon la version de la norme applicable à l'appareil).
+Cette formule s'applique sans mesure de sécurité complémentaire. L'IEC 60335-2-40 éd. 7 (2022) permet de monter jusqu'à environ **988 g** de R290 (26 × LFL) dans un split, à condition d'ajouter brassage d'air, détection de fuite et vannes d'arrêt.
+
+Pour les meubles frigorifiques commerciaux monoblocs (IEC 60335-2-89:2019, EN IEC 60335-2-89:2022), la limite historique de **150 g** de R290 par circuit est passée à **13 × LFL ≈ 494 g** (environ 500 g ; 1,2 kg au plus pour les A2L), pour les appareils conçus selon cette édition.
 
 Teste d'autres cas avec le calculateur ci-dessous.`,
       widget: 'r290-limit',

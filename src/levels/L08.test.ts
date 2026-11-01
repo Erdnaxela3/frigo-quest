@@ -55,6 +55,19 @@ describe('L08', () => {
     expect(Math.max(...shs) - Math.min(...shs)).toBeGreaterThan(8);
   });
 
+  it('hunting valve: an initial superheat read anywhere in the swing is accepted', () => {
+    const s = run(start('examen', seedFor('big')), [{ type: 'wait', seconds: 60 }, { type: 'answer', field: 'SH0', value: 11 }]);
+    expect(s.answers.SH0.ok).toBe(true);
+  });
+
+  it('dead element: opening right after the KP1 cut is judged on the port.evap gauge, not the slow liquid line', () => {
+    let s = run(start('standard'), [{ type: 'toggleCap', target: 'valve.liquid' }, { type: 'setServiceValve', valve: 'valve.liquid', pos: 'closed' }]);
+    while (s.running || s.t < 5) s = run(s, [{ type: 'wait', seconds: 0.1 }]);
+    s = run(s, [{ type: 'toggleCap', target: 'valve.gas' }, { type: 'setServiceValve', valve: 'valve.gas', pos: 'front' }, { type: 'lockout' },
+      { type: 'custom', id: 'open-section' }]);
+    expect(ids(s)).toEqual([]);
+  });
+
   it('opening without pump-down → open-under-pressure (critical, ends an exam)', () => {
     let s = start('examen', seedFor('dead'));
     s = run(s, [{ type: 'lockout' }, { type: 'custom', id: 'open-section' }]);

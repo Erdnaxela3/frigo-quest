@@ -51,7 +51,7 @@ describe('pump-down and pressostats', () => {
     expect(s.cycle && toRel(s.cycle.BP)).toBeGreaterThan(8); // back to the running point
   });
 
-  it('a liquid-full receiver spikes the HP and trips KP5 (manual reset)', () => {
+  it('a liquid-full receiver spikes the HP and trips KP6 (manual reset)', () => {
     let s = makePlatine({ levelId: 'T', tier: 'guide', running: true, system: { hp: 1.2 } });
     s = run(s, { type: 'toggleCap', target: 'valve.receiver' }, { type: 'setServiceValve', valve: 'valve.receiver', pos: 'closed' });
     const r = run(s, { type: 'resetKp5' });
@@ -59,7 +59,7 @@ describe('pump-down and pressostats', () => {
     s = stepUntil(s, (x) => !x.running).s;
     expect(s.plant.kp5.tripped).toBe(true);
     expect(vs(s, 'hp').phase).toBe('liquidFull');
-    expect(s.journal.some((j) => /KP5.*réarmement manuel/.test(j.text))).toBe(true);
+    expect(s.journal.some((j) => /KP6.*réarmement manuel/.test(j.text))).toBe(true);
     s = tick(level, s, 60);
     expect(s.running).toBe(false); // stays off until reset
     s = run(s, { type: 'setServiceValve', valve: 'valve.receiver', pos: 'open' }, { type: 'resetKp5' });

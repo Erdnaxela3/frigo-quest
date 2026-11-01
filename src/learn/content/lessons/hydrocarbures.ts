@@ -79,11 +79,11 @@ Un circuit simplement « vidé » n'est pas un circuit sûr pour braser.`,
       title: 'Charge et limite de charge (12.03, 12.10)',
       body: `Les charges HC sont **petites** (souvent quelques dizaines à quelques centaines de grammes). On charge **exclusivement à la balance**, avec une précision de l'ordre de quelques grammes (l'application exige ± 5 g), au poids indiqué sur l'étiquette. Une surcharge est à la fois un problème de performance et de **sécurité** : plus de fluide = plus de gaz libéré en cas de fuite.
 
-Pour savoir si une charge est admissible dans un local, on utilise la LFL et le volume ou la surface (formules EN 378 / IEC, à vérifier dans la version en vigueur) :
+Pour savoir si une charge est admissible dans un local, on utilise la LFL et le volume ou la surface (formules EN 378 et IEC 60335) :
 
 - m₁ = 4 m³ × LFL = 0,152 kg de R290.
-- Climatisation de confort : m_max = 2,5 × LFL^(5/4) × h₀ × √A (h₀ = 0,6 m sol, 1,0 m fenêtre, 1,8 m mur, 2,2 m plafond).
-- Meubles commerciaux : limite historique 150 g par circuit, évoluée vers environ 494 g (13 × LFL) selon la version de l'IEC 60335-2-89 (à vérifier).
+- Climatisation de confort : m_max = 2,5 × LFL^(5/4) × h₀ × √A (h₀ = 0,6 m sol, 1,0 m fenêtre, 1,8 m mur, 2,2 m plafond). L'IEC 60335-2-40 éd. 7 (2022) permet d'aller jusqu'à environ 988 g de R290 (26 × LFL) si l'appareil ajoute des mesures de sécurité (brassage d'air, détecteur de fuite, vannes d'arrêt).
+- Meubles commerciaux monoblocs : limite historique 150 g par circuit, portée à **13 × LFL ≈ 494 g** (on dit « 500 g ») par l'IEC 60335-2-89:2019, reprise en EN IEC 60335-2-89:2022, harmonisée en 2023. L'appareil doit avoir été conçu et certifié selon cette édition : la charge de la plaque fait foi.
 
 Le calculateur permet de vérifier une installation.`,
       widget: 'r290-limit',

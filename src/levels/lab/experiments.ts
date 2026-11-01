@@ -206,7 +206,8 @@ export const EXPERIMENTS: Experiment[] = [
     ],
     quiz: 'g-psat',
     setup: () => makeBench({ A: { V: 1, mRef: 0.88 } }),
-    check: (b) => sA(b).phase === 'liquidFull',
+    // wait for the hydraulic jump so the learner sees it before the takeaway
+    check: (b) => sA(b).phase === 'liquidFull' && sA(b).P > psat(b.c.fluid, vol(b, 'A').T) + 10,
     demo: { actions: [(b) => { setPlate(b, 55); }], seconds: 900 },
   },
   {
@@ -303,7 +304,7 @@ export const EXPERIMENTS: Experiment[] = [
     skills: A1('1.07'),
     instruction: 'CO₂ (R744) liquide-vapeur à 20 °C. Chauffez la plaque au-dessus de 31 °C, son point critique.',
     takeaway: [
-      'Au-delà de 31 °C (73,8 bar) il n\'y a plus ni liquide ni vapeur : le niveau disparaît, c\'est l\'état supercritique, sans courbe de saturation.',
+      'Au-delà de 31 °C (73,8 bar abs) il n\'y a plus ni liquide ni vapeur : le niveau disparaît, c\'est l\'état supercritique, sans courbe de saturation.',
       'Une installation CO₂ fonctionne souvent en transcritique : le « condenseur » devient un refroidisseur de gaz.',
     ],
     quiz: 'g-psat',

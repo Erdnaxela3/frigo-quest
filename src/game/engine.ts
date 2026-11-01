@@ -107,7 +107,8 @@ function apply(l: Level, s: GameState, a: Action): string {
       const on = !s.caps[a.target];
       if (on && isPort(a.target) && hoseAt(s, a.target)) refuse('Un flexible est raccordé : déposez-le avant de remettre le bouchon.');
       s.caps[a.target] = on;
-      return `${on ? 'Bouchon remis' : 'Bouchon retiré'} : ${TARGET_LABELS[a.target]}`;
+      const what = isPort(a.target) ? 'Bouchon' : 'Chapeau';
+      return `${what} ${on ? 'remis' : 'retiré'} : ${TARGET_LABELS[a.target]}`;
     }
     case 'connectHose': {
       const h = getHose(s, a.hose);
@@ -153,7 +154,7 @@ function apply(l: Level, s: GameState, a: Action): string {
       s.manifold.valves[a.valve] = o > 0;
       if (o > 0 && o < 1) s.manifold.opening[a.valve] = o;
       else delete s.manifold.opening[a.valve];
-      return `Manifold : vanne ${MF_FR[a.valve]} ${o === 0 ? 'fermée' : o < 1 ? `entrouverte (${Math.round(o * 100)} %)` : 'ouverte'}`;
+      return `Manifold : vanne ${MF_FR[a.valve]} ${o === 0 ? 'fermée' : o < 1 ? `${o < 0.3 ? 'entrouverte' : 'mi-ouverte'} (${Math.round(o * 100)} %)` : 'ouverte'}`;
     }
     case 'setScale': s.manifold.scale = a.fluid; return `Échelle du manifold : ${a.fluid}`;
     case 'setServiceValve': {
@@ -209,14 +210,14 @@ function apply(l: Level, s: GameState, a: Action): string {
       s.unitOn = true;
       control(s);
       if (s.running) return 'Mise en marche de l\'unité';
-      if (s.plant.kp5.tripped) return 'Mise en marche : pressostat HP (KP5) déclenché, le compresseur ne démarre pas (réarmement)';
+      if (s.plant.kp5.tripped) return 'Mise en marche : pressostat HP (KP6) déclenché, le compresseur ne démarre pas (réarmement)';
       if (s.plant.kp1.tripped) return systemRef(s) < 0.3 * s.plant.nominalCharge
         ? 'Mise en marche : coupure immédiate du pressostat BP (circuit presque vide)'
         : 'Mise en marche : pressostat BP (KP1) ouvert, le compresseur attend l\'enclenchement';
       return 'Mise en marche : thermostat satisfait, le compresseur attend la demande de froid';
     }
     case 'setPressostat': {
-      const k = s.plant[a.kp], lim = KP_LIMITS[a.kp], name = a.kp === 'kp1' ? 'KP1' : 'KP5';
+      const k = s.plant[a.kp], lim = KP_LIMITS[a.kp], name = a.kp === 'kp1' ? 'KP1' : 'KP6';
       const out = (v: number, [lo, hi]: readonly number[]) => v < lo - 1e-9 || v > hi + 1e-9;
       if (a.range !== undefined && out(a.range, lim.range)) refuse(`${name} : butée de la vis RANGE (${fmt(lim.range[0])} à ${fmt(lim.range[1])} bar).`);
       if (a.diff !== undefined && out(a.diff, lim.diff)) refuse(`${name} : butée de la vis DIFF (${fmt(lim.diff[0])} à ${fmt(lim.diff[1])} bar).`);
@@ -226,10 +227,10 @@ function apply(l: Level, s: GameState, a: Action): string {
     }
     case 'resetKp5': {
       const k = s.plant.kp5;
-      if (!k.tripped) refuse('KP5 : pas déclenché, rien à réarmer.');
-      if (toRel(P_hp(s)) > kpCutIn(k)) refuse('KP5 : la HP est encore trop haute, le réarmement ne tient pas.');
+      if (!k.tripped) refuse('KP6 : pas déclenché, rien à réarmer.');
+      if (toRel(P_hp(s)) > kpCutIn(k)) refuse('KP6 : la HP est encore trop haute, le réarmement ne tient pas.');
       k.tripped = false;
-      return 'KP5 réarmé (bouton de réarmement manuel)';
+      return 'KP6 réarmé (bouton de réarmement manuel)';
     }
     case 'setThermostat': {
       const th = s.plant.thermostat ?? refuse('Pas de thermostat réglable ici.');
@@ -341,12 +342,15 @@ export function highlight(l: Level, s: GameState): TargetId[] {
   return o && (s.hintLevel[o.id] ?? 0) >= 3 ? o.hints?.[2] ?? [] : [];
 }
 
+const RANK = { minor: 0, major: 1, critical: 2 } as const;
+
 function runRules(l: Level, prev: GameState, s: GameState, a: RuleAction) {
+  let worst = -1; // several rules on one action: the most severe one keeps the toast
   for (const r of l.rules) {
     if (s.finished || s.mistakes.some((m) => m.id === r.id) || !r.when({ prev, s, a })) continue;
     s.mistakes.push({ id: r.id, severity: r.severity, message: r.message, skill: r.skill, lesson: r.lesson, t: s.t });
     journal(s, `Erreur ${SEVERITY_LABEL[r.severity].toLowerCase()} : ${r.message}`, 'mistake');
-    toast(s, r.message, 'bad');
+    if (RANK[r.severity] >= worst) { toast(s, r.message, 'bad'); worst = RANK[r.severity]; }
     if (s.tier === 'examen' && r.severity === 'critical') s.finished = result(l, s, `Erreur critique en examen : ${r.message}`);
   }
 }
@@ -394,16 +398,16 @@ export function dispatch(l: Level, prev: GameState, a: Action): GameState {
   }
   const s = cloneState(prev);
   s.undo = null;
-  let text: string | void;
+  let text: string | void, levelText: string | void = undefined;
   try {
     text = apply(l, s, a);
-    if (l.onAction) text = l.onAction(s, a) || text;
+    if (l.onAction) text = (levelText = l.onAction(s, a)) || text;
   } catch (e) {
     if (e instanceof Refusal) return { ...prev, toast: { text: e.text, kind: 'info', n: (prev.toast?.n ?? 0) + 1 } };
     throw e;
   }
   if (!SILENT.has(a.type)) journal(s, text || '');
-  if (a.type === 'custom' && text && s.toast?.n === prev.toast?.n) toast(s, text);
+  if ((a.type === 'custom' || (a.type === 'answer' && levelText)) && text && s.toast?.n === prev.toast?.n) toast(s, text);
   if (a.type === 'finish') {
     // whatever is left in hoses and manifold gets purged at the workshop
     const left = s.hoses.reduce((g, h) => g + (h.port && isPort(h.port) ? 0 : vent(s.circuit, hoseVol(h))), 0)
@@ -444,6 +448,7 @@ export function clickAction(s: GameState, target: TargetId): Action | { panel: P
     if (target === 'comp.kp1') return { panel: 'kp1' };
     if (target === 'comp.kp5') return { panel: 'kp5' };
     if (target === 'comp.txv') return { panel: 'txv' };
+    if (target === 'comp.solenoid') return { type: 'toggleSolenoid' }; // manual opener screw
     if (target === 'comp.kvp' && s.plant.kvp) return { panel: 'kvp' };
     if (target === 'comp.kvr' && s.plant.kvr) return { panel: 'kvr' };
   }

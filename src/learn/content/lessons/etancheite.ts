@@ -10,7 +10,7 @@ const lesson: Lesson = {
       title: 'Qui contrôle, quand, et pourquoi',
       body: `Le **détenteur** de l'équipement (le client exploitant) est responsable de faire contrôler l'étanchéité. Le contrôle est réalisé par une entreprise titulaire de l'**attestation de capacité**, par un technicien titulaire d'une attestation d'aptitude (A1, A2 ou E selon le cas ; la catégorie E ne permet pas d'intervenir sur le circuit).
 
-La fréquence dépend de la charge en **t CO₂e = kg × PRP / 1000** (fréquences issues de sources secondaires concordantes, à vérifier sur le texte officiel) :
+La fréquence dépend de la charge en **t CO₂e = kg × PRP / 1000** (article 5 du règlement (UE) 2024/573) :
 
 | Charge HFC | Sans détection | Avec système de détection |
 |---|---|---|
@@ -19,10 +19,10 @@ La fréquence dépend de la charge en **t CO₂e = kg × PRP / 1000** (fréquenc
 | ≥ 500 t CO₂e | 3 mois | 6 mois, détection obligatoire |
 
 Cas particuliers :
-- **HFO** (R1234yf, R1234ze…) : seuils en kg, ≥ 1 kg → 12 mois, ≥ 10 kg → 6 mois, ≥ 100 kg → 3 mois (à vérifier).
-- Équipement **hermétique** étiqueté < 10 t CO₂e : exempté (à vérifier).
-- Contrôle à la **mise en service** et après toute modification du circuit (à vérifier).
-- Après réparation d'une fuite : **nouveau contrôle dans le mois** qui suit (à vérifier).
+- **HFO** (R1234yf, R1234ze…) : seuils en kg, ≥ 1 kg → 12 mois, ≥ 10 kg → 6 mois, ≥ 100 kg → 3 mois.
+- Équipement **hermétique** étiqueté < 10 t CO₂e (ou < 2 kg de HFO ; < 3 kg dans les logements) : exempté.
+- Contrôle à la **mise en service** et après toute modification du circuit.
+- Après réparation d'une fuite : **nouveau contrôle** au plus tôt 24 h, au plus tard 1 mois après la réparation.
 
 Exemple du niveau L02 : R404A, 8 kg → 8 × 3922 / 1000 = 31,4 t CO₂e → **12 mois**. Dernier contrôle il y a 13 mois : le contrôle est **en retard**, il faut le noter.`,
     },
@@ -65,7 +65,7 @@ Ne vous raccordez pas au manifold sans nécessité : chaque raccordement et chaq
 Sur un circuit vide ou ouvert, la méthode directe avec intervention passe par une mise sous pression d'**azote** (voir la leçon Tirage au vide et tests de pression), éventuellement avec un gaz traceur azote/hydrogène.
 
 Bien utiliser le détecteur électronique :
-- **Préchauffage** du capteur, puis **vérification avec la fuite de référence** : sans cette vérification, un résultat négatif ne prouve rien. Sensibilité attendue de l'ordre de 5 g/an (à vérifier).
+- **Préchauffage** du capteur, puis **vérification avec la fuite de référence** : sans cette vérification, un résultat négatif ne prouve rien. Sensibilité attendue de l'ordre de 5 g/an.
 - Couper la ventilation et les ventilateurs dans les volumes confinés : le courant d'air dilue le fluide.
 - Balayer **lentement**, environ **5 cm/s**, à moins de 5 mm de la surface.
 - Sonder **sous** les raccords : les HFC sont **plus lourds que l'air**.
@@ -78,15 +78,15 @@ Toute alarme se **confirme au produit moussant** au point exact : des bulles qui
       title: 'Après le contrôle : réparer et consigner',
       body: `Fuite trouvée :
 - Informer le détenteur. La fuite doit être **réparée sans délai**.
-- Après réparation, **nouveau contrôle** pour vérifier l'efficacité, dans le mois qui suit (à vérifier).
-- Si la fuite n'est pas réparée tout de suite, l'équipement reçoit un marquage « défaut d'étanchéité » (à vérifier).
+- Après réparation, **nouveau contrôle** pour vérifier l'efficacité, au plus tôt 24 h, au plus tard 1 mois après la réparation.
+- Si la fuite n'est pas réparée tout de suite, l'équipement reçoit un marquage « défaut d'étanchéité » (pastille rouge).
 
 Dans tous les cas, on **consigne** (item 4.09) :
 - dans le **registre** de l'équipement : date, résultat, fuites trouvées et réparées, quantités ajoutées ;
 - sur la **fiche d'intervention Cerfa n° 15497** ;
-- sur l'**étiquette** apposée sur l'équipement : date du contrôle et date du **prochain contrôle** (à vérifier pour le format).
+- sur l'équipement : **pastille bleue** (≥ 4 cm) indiquant la date limite du prochain contrôle ; **pastille rouge** collée dessus si la fuite n'est pas réparée, avec 4 jours ouvrés pour agir.
 
-Les documents sont conservés **5 ans** (à vérifier). Un contrôle non consigné est, pour l'administration, un contrôle non fait.
+Les documents sont conservés **au moins 5 ans**, par le détenteur et par l'opérateur. Un contrôle non consigné est, pour l'administration, un contrôle non fait.
 
 Zéro fuite est un résultat possible : ne déclarez pas une fuite sans l'avoir confirmée par une deuxième méthode.`,
     },

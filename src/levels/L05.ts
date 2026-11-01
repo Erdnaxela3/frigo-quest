@@ -153,7 +153,8 @@ const L05: Level = {
     {
       id: 'disconnect', label: 'Fermer la bouteille et déposer les flexibles',
       done: (s) => !s.bench.cylinder!.gas && !onBoard(s) && !onCyl(s),
-      hints: ['Bouteille fermée avant de déposer son flexible.', 'Fermez la vanne gaz de la bouteille, déposez les flexibles des prises et de la bouteille.'],
+      hints: ['Bouteille fermée avant de déposer son flexible, sinon son contenu part à l\'air.',
+        'Fermez la vanne gaz de la bouteille et la vanne à boule du flexible « rec », puis déposez les flexibles de la bouteille et des prises.'],
     },
     {
       id: 'weigh', label: 'Peser la bouteille : masse récupérée',

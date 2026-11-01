@@ -56,9 +56,15 @@ function solve(i: CycleInput, dpStarve: number): CycleOutput {
   const Tliquid = TcRef - scTrue;
   const SC = Tcond - Tliquid;
 
-  const current = I0 * (0.35 + 0.65 * ((HP - BPsuction) / (HP0 - BP0)) * mRel);
+  // I0 / capacity are rated at a fixed 30 °C outdoor point, so head pressure moves current and capacity across seasons
+  const TcRated = 30 + dTc0, TeRated = i.Troom - dTe0;
+  const HPr = psat(i.fluid, TcRated, 'bubble');
+  const current = I0 * (0.35 + 0.65 * ((HP - BPsuction) / (HPr - BP0)) * mRel);
   const feed = 1 - 0.4 * Math.min(1, dpStarve); // starved TXV: part of the evaporator runs dry
-  const COP = (feed * CARNOT_FRACTION * ce * (TevapNat + 273.15)) / Math.max(5, Tcond - TevapNat);
+  const Qrated = (CARNOT_FRACTION * (TeRated + 273.15) / Math.max(5, TcRated - TeRated)) * VOLT_PF * I0;
+  const dh = Math.max(0.3, 1 - 0.012 * (Tliquid - (TcRated - SC_NOM))); // warmer liquid, less useful enthalpy
+  const capacityKW = Qrated * mRel * dh * feed;
+  const COP = capacityKW / (VOLT_PF * current);
   const filterDT = 6 * f.filterRestriction;
 
   return {
@@ -68,7 +74,7 @@ function solve(i: CycleInput, dpStarve: number): CycleOutput {
     Tdischarge: Tcond + 30 + 2 * (SH - 7) + 8 * (HP / BPsuction - 2.4) + 10 * (1 - ce),
     filterDT,
     current,
-    capacityKW: COP * VOLT_PF * current,
+    capacityKW,
     COP,
     sightGlass: f.chargeRatio < 0.7 ? 'mousse' : SC < 1 || f.filterRestriction >= 0.4 ? 'bulles' : 'clair',
     airOutEvap: i.Troom - 0.6 * (i.Troom - Tevap) * (f.evapFanOk ? 1 : 0.3),

@@ -14,6 +14,7 @@ import {
 } from './engine';
 import { concentration, gasDetector, gasReading, gaugeP, sceneView, vs } from './platineModel';
 import { getLevel } from '../levels';
+import { SANDBOX_FLUIDS } from '../levels/sandbox';
 import { FLUID_IDS, toAbs, toRel } from '../physics/refrigerants';
 import type { FluidId } from '../physics/types';
 import { mulberry32, parseNumber } from '../learn/quiz';
@@ -33,6 +34,17 @@ export default function LevelPage({ id }: { id?: string }) {
 }
 
 function Briefing({ level }: { level: Level }) {
+  if (level.sandbox) return (
+    <div className="lv-brief card">
+      <p><a href="#/niveaux">← Niveaux</a></p>
+      <h1>Atelier libre</h1>
+      <p>{level.briefing}</p>
+      <h3>Choisir le fluide de la platine</h3>
+      <div className="row">
+        {SANDBOX_FLUIDS.map((f) => <a key={f} className="btn" href={`#/niveau/LIBRE-${f}/guide`}>{f}</a>)}
+      </div>
+    </div>
+  );
   return (
     <div className="lv-brief card">
       <p><a href="#/niveaux">← Niveaux</a></p>
@@ -77,7 +89,7 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
   useEffect(() => {
     if (!s.toast) return;
     setToast(s.toast);
-    const h = setTimeout(() => setToast(null), s.toast.kind === 'bad' ? 7000 : 4500);
+    const h = setTimeout(() => setToast(null), Math.max(s.toast.kind === 'bad' ? 7000 : 4500, s.toast.text.length * 60));
     return () => clearTimeout(h);
   }, [s.toast?.n]);
 
@@ -96,6 +108,7 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
     else act(a);
   };
 
+  const lpG = useDamped(gaugeP(s, 'mf.lp')), hpG = useDamped(gaugeP(s, 'mf.hp'));
   if (s.finished) return <Debrief level={level} s={s} onRestart={onRestart} />;
 
   const exam = tier === 'examen';
@@ -116,7 +129,9 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
         <span className="badge">{TIERS.find((t) => t.id === tier)!.label}</span>
         <span className="mono" title="Temps simulé">⏱ {fmtTime(s.t)}{exam && level.timeLimit ? ` / ${fmtTime(level.timeLimit)}` : ''}</span>
         <span className={`mono ${emittedG(s) > 5 ? 'lv-bad' : ''}`}>Émissions {fmt(emittedG(s))} g</span>
-        <button type="button" className="primary" onClick={() => confirm('Terminer l\'intervention ?') && act({ type: 'finish' })}>Terminer</button>
+        {level.sandbox
+          ? <button type="button" onClick={() => confirm('Remettre la platine à zéro ?') && onRestart()}>Recommencer</button>
+          : <button type="button" className="primary" onClick={() => confirm('Terminer l\'intervention ?') && act({ type: 'finish' })}>Terminer</button>}
       </header>
 
       <div className="lv-main">
@@ -128,9 +143,9 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
 
         <aside className="lv-side">
           <section className="card">
-            <h3>Ordre de mission</h3>
+            <h3>{level.sandbox ? 'Atelier libre' : 'Ordre de mission'}</h3>
             <p className="lv-small">{level.briefing}</p>
-            {!exam && (
+            {!exam && !level.sandbox && (
               <ol className="lv-obj">
                 {objectivesFor(level, tier).map((o) => (
                   <li key={o.id} className={s.done.includes(o.id) ? 'done' : o === obj ? 'current' : ''}>{o.label}</li>
@@ -141,7 +156,7 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
 
           <section className="card lv-inst">
             <h3>Manifold</h3>
-            <Manifold fluid={s.manifold.scale} lpAbs={gaugeP(s, 'mf.lp')} hpAbs={gaugeP(s, 'mf.hp')} valves={s.manifold.valves}
+            <Manifold fluid={s.manifold.scale} lpAbs={lpG} hpAbs={hpG} valves={s.manifold.valves}
               fourWay={s.manifold.fourWay} onToggle={(v) => act({ type: 'toggleManifold', valve: v })} />
             <label className="row lv-small">Échelle
               <select value={s.manifold.scale} onChange={(e) => act({ type: 'setScale', fluid: e.target.value as FluidId })}>
@@ -214,7 +229,7 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
                 onClick={() => act({ type: 'setTimeScale', scale: k })}>{k === 0 ? '⏸' : `×${k}`}</button>
             ))}
           </div>
-          {!exam && (
+          {!exam && !level.sandbox && (
             <button type="button" className={stuck ? 'lv-pulse' : ''} onClick={() => act({ type: 'requestHint' })}>
               Indice{tier === 'standard' ? ' (−5)' : ''}
             </button>
@@ -227,6 +242,14 @@ function Game({ level, tier, onRestart }: { level: Level; tier: Tier; onRestart:
       {toast && <div className={`toast ${toast.kind}`} role={toast.kind === 'bad' ? 'alert' : 'status'} onClick={() => setToast(null)}>{toast.text}</div>}
     </div>
   );
+}
+
+// glycerine-filled gauge: damps the hose's sub-second condensation flicker, follows real changes (> 1.5 bar) at once
+function useDamped(v: number) {
+  const r = useRef({ v, t: performance.now() });
+  const now = performance.now(), a = 1 - Math.exp(-(now - r.current.t) / 400);
+  r.current = { v: Math.abs(v - r.current.v) > 1.5 ? v : r.current.v + (v - r.current.v) * a, t: now };
+  return r.current.v;
 }
 
 function AnswerRow({ f, s, exam, act }: { f: ReturnType<typeof answersFor>[number]; s: GameState; exam: boolean; act: (a: Action) => void }) {
@@ -363,7 +386,7 @@ function Debrief({ level, s, onRestart }: { level: Level; s: GameState; onRestar
       <div className="card">
         <h1>{level.id} · Compte rendu d'intervention</h1>
         <p className="lv-stars" aria-label={`${r.stars} étoile(s) sur 3`}>{'★'.repeat(r.stars)}<span className="muted">{'★'.repeat(3 - r.stars)}</span></p>
-        <p><strong>{r.score}/100</strong> · {r.completed ? 'Intervention réussie' : r.failed ?? 'Objectifs non atteints'} · émissions {fmt(r.emittedG)} g · {fmtTime(s.t)}</p>
+        <p><strong>{r.completed ? r.score : '—'}/100</strong> · {r.completed ? 'Intervention réussie' : r.failed ?? 'Objectifs non atteints'} · émissions {fmt(r.emittedG)} g · {fmtTime(s.t)}</p>
         {!r.completed && !r.failed && (
           <ul className="lv-small">{objectivesFor(level, s.tier).filter((o) => !s.done.includes(o.id)).map((o) => <li key={o.id}>Non fait : {o.label}</li>)}</ul>
         )}

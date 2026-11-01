@@ -1,6 +1,6 @@
 # Regulatory research
 
-Confidence: ✅ checked against an official text · ⚠️ secondary sources only, they agree · ❓ sources disagree, verify before publishing as quiz content.
+Last verified **2026-11-01** against primary texts (see Sources). Confidence: ✅ checked against an official text · ⚠️ secondary sources only, they agree · ❓ sources disagree, verify before publishing as quiz content.
 
 Quiz content built on a ⚠️/❓ fact must carry `confidence` in its data so it can be reviewed (see 03-learning-modules.md).
 
@@ -22,16 +22,17 @@ Legal basis ✅: EU Implementing Regulation **2024/2215** (minimum certification
 
 ### Dates & validity ✅
 - In force 11 Dec 2025, **mandatory 1 Jan 2027**; arrêté of 13 Oct 2008 repealed 31 Dec 2026.
-- Holders of cat. I–IV: **ad-hoc refresher by 12 March 2029** to reach A1/A2/D/E, otherwise the old certificate lapses and the full exam must be retaken.
-- Periodic refresher **at least every 7 years**. Missed → certificate suspended; > 3 years late → full exam again.
-- ⚠️ Transitional: cat. I holders may keep working (including on the new fluids) until 12 Mar 2029.
+- Holders of cat. I–IV: **ad-hoc refresher by 12 March 2029** to reach A1/A2/D/E (I→A1, II→A2, III→D, IV→E), otherwise the old certificate lapses and the full exam must be retaken.
+- Periodic refresher **at least every 7 years** from the date of issue (all categories except V). Missed → certificate suspended; > 3 years late → full exam again.
+- ✅ Transitional: old cat. I–IV certificates stay valid **under their original conditions** (F-gases only, not HC) until 12 Mar 2029 (EU 2024/573 art. 10(9), arrêté art. 7). Until 31 Dec 2026, attestations may still be issued under the 2008 arrêté and are then subject to the refresher. For CO₂/NH₃, holders of 1/2/A1/A2 with employer-attested experience may handle them until **31 Dec 2028** (ministry transition note §I.3).
+- Refresher I→A1 / II→A2: ≥ 3 h 30 (Annex VIII); periodic refresher: common part 4 h + A1 complement 1 h (Annex VII).
 
 ### Exam structure ✅ (Annex II)
 - Theory (T) + practical (P) per category.
 - Durations: tronc commun T 1 h + P 2 h; A1-specific T 15 min + P 1 h → **4 h 15 total**.
 - A1 theory must include ≥ 1 question on CO₂ and NH₃ and ≥ 1 on energy efficiency.
-- A1 is tested on groups **1, 2, 3, 4, 5, 10, 11, 12** + **one of 6/7/8/9** chosen by the examiner (unknown to the candidate).
-- Pass marks / question count: **not in the text we read** ❓ → the app uses 70 % as a default threshold, configurable.
+- A1 is tested on groups **1, 2, 3, 4, 5, 10, 11, 12** + **at least one of 6/7/8/9** chosen by the examiner (unknown to the candidate) (Annex II.B). Other durations: A2 3 h 55, B 3 h 45, C 4 h, D/E 1 h 30, V 2 h.
+- Pass marks / question count: **not in the arrêté** (only "ayant réussi l'examen", checked 2026-11) ❓ → the app uses 70 % as a default threshold, configurable.
 
 ### Competence items (Annex II.C) — the app's skill taxonomy
 
@@ -80,59 +81,97 @@ A1/A2-specific:
 | 12.13 | Site H&S, signage, gas detection | T |
 | 12.14 | Efficiency with flammable refrigerants | T |
 
-## 2. F-Gas III — Regulation (EU) 2024/573
+## 2. F-Gas III — Regulation (EU) 2024/573 ✅
 
-Applies from 11 Mar 2024 ✅.
+All of section 2 was checked against the official FR text of 2024/573. EUR-Lex HTML/PDF/ELI return an empty HTTP 202 to scripts, so the text came from the Publications Office cellar (`https://publications.europa.eu/resource/celex/32024R0573`, `Accept: application/xhtml+xml`, `Accept-Language: fra`). French rules come from the code de l'environnement and its arrêtés (sources below).
 
-### Leak check frequency ⚠️ (consistent across 4 secondary sources; EUR-Lex blocked our fetch)
+- Applies from **11 Mar 2024** (art. 38: in force 20 days after OJ publication); art. 12 (labelling) from 1 Jan 2025.
+- GWP basis: **AR4 for HFCs** (R32 675, R134a 1430, R404A 3922, R410A 2088), **AR6 for HFOs** (Annex II: R1234yf = **0.501**, R1234ze = 1.37). The game still uses 4 for R1234yf (old 517/2014 value). This is harmless for leak checks, which use kg for HFOs.
 
-| HFC charge (t CO₂e = kg × GWP / 1000) | Without LDS | With leak detection system |
+### Leak checks (art. 4–7) ✅
+
+| Charge | Without LDS | With leak detection system |
 |---|---|---|
-| ≥ 5 and < 50 | 12 months | 24 months |
-| ≥ 50 and < 500 | 6 months | 12 months |
-| ≥ 500 | 3 months | 6 months (LDS mandatory) |
+| HFC (Annex I) ≥ 5 and < 50 t CO₂e · HFO (Annex II s.1) ≥ 1 and < 10 kg | 12 months | 24 months |
+| HFC ≥ 50 and < 500 t · HFO ≥ 10 and < 100 kg | 6 months | 12 months |
+| HFC ≥ 500 t · HFO ≥ 100 kg | 3 months | 6 months (LDS mandatory, art. 6) |
 
-- New: HFOs (Annex II section 1) in scope by kg: ≥ 1 kg → 12 months, ≥ 10 kg → 6 months, ≥ 100 kg → 3 months ⚠️ (from memory of the regulation, one source confirms "≥ 1 kg Annex II gases") — verify.
-- Hermetically sealed & labelled equipment < 10 t CO₂e exempt ⚠️.
-- Check at commissioning and after any modification to the circuit ⚠️.
-- France: **Cerfa 15497\*04** fiche d'intervention; blue sticker (≥ 4 cm) with next due date; red "défaut d'étanchéité" marking if leak not repaired ⚠️ (FFB).
-- Records kept **5 years** ⚠️ (common knowledge, not re-checked).
+- Exempt if **hermetically sealed and labelled as such**: < 10 t CO₂e (HFC), < 2 kg (HFO), or **< 3 kg of F-gas in residential buildings** (art. 5(1)).
+- LDS itself checked at least every 12 months (art. 6(3)).
+- After a leak repair: re-check by a certified person **at the earliest after 24 h of operation, at the latest 1 month** after the repair (art. 4(5)).
+- France, R543-79: leak check **at commissioning** (HFC > 5 t CO₂e) and **after any modification affecting the circuit**; leak report sent to the préfet above 500 t CO₂e.
+- Records (art. 7): quantity and type of gas, additions with dates, recovered quantities, recycled/reclaimed origin, company and certificate number, dates and results of checks and repairs, decommissioning. Kept **≥ 5 years** by the operator, with copies kept ≥ 5 years by the servicing company.
+- France, **Cerfa 15497\*04** (arrêté 29/05/2024, in force 6 Jul 2024; still current on service-public in 2026). Mandatory as fiche d'intervention (R543-82). Fields: operator + SIRET + **n° d'attestation de capacité**; détenteur; equipment, fluid, charge kg + t CO₂e; nature of intervention; manual detector ID + last check date; LDS yes/no; charge band (HCFC kg / HFC t / HFO kg) and frequency; leaks (location, repaired / to do); charged A virgin / B recycled / C reclaimed; recovered D for treatment (BSFF no. on Trackdéchets) / E kept for reuse; container ID; ADR + waste code (14 06 01\* non-flammable, 16 05 04\* flammable); destination facility; observations. **Signed jointly by opérateur and détenteur** (the détenteur keeps the original; signature not required below 5 t CO₂e HFC / 3 kg HCFC). Kept **≥ 5 years by both**, from the signature date (R543-82).
+- Marking (R543-79-1, arrêté 29/02/2016 art. 6–7): **blue disc ≥ 4 cm** with the *date limite de validité* of the check (no recharge after that date). **Red disc ≥ 4 cm** on top of the blue one if the leak can't be fixed on the spot. Within **4 working days** the leak is stopped, or the equipment is shut down and emptied. Both discs carry the operator's capacité number.
+- Leak detector: sensitivity ≤ 5 g/yr, verified at least every 12 months (arrêté 29/02/2016 art. 2).
 
-### Placing-on-market bans (Annex IV) ❓ — one popular summary, partially contradicted elsewhere
+### Placing-on-market bans (Annex IV) ✅
 
 | Equipment | Limit | Date |
 |---|---|---|
-| Single split < 3 kg | GWP ≥ 750 | 1 Jan 2025 |
-| Self-contained (monobloc) AC/HP ≤ 50 kW | GWP ≥ 150 | 1 Jan 2027 |
-| Split air-to-water HP ≤ 12 kW | GWP ≥ 150 | 1 Jan 2027 |
-| Split air-to-air ≤ 12 kW | GWP ≥ 150 | 1 Jan 2029 |
-| Split air-to-air > 12 kW | GWP ≥ 750 | 1 Jan 2029 |
-| Split ≤ 12 kW | all F-gases | 1 Jan 2035 |
+| Split systems < 3 kg (9 a) | GWP ≥ 750 | 1 Jan 2025 |
+| Self-contained refrigeration (plug-in), except chillers (4) | GWP ≥ 150 | 1 Jan 2025 |
+| Other refrigeration, except chillers (5 b / 5 c) | GWP ≥ 2500 / GWP ≥ 150 | 2025 / 2030 |
+| Domestic fridges/freezers (2 b) | all F-gases | 1 Jan 2026 |
+| Plug-in / monobloc / self-contained AC & HP ≤ 12 kW (8 b) | GWP ≥ 150 (750 if safety requires) | 1 Jan 2027 |
+| Self-contained AC & HP > 12 kW to 50 kW (8 d) | GWP ≥ 150 (750 if safety requires) | 1 Jan 2027 |
+| Split air-to-water ≤ 12 kW (9 b) | GWP ≥ 150 | 1 Jan 2027 |
+| Chillers ≤ 12 kW / > 12 kW (7 b / 7 d) | GWP ≥ 150 / GWP ≥ 750 | 1 Jan 2027 |
+| Split air-to-air ≤ 12 kW (9 c) | GWP ≥ 150 | 1 Jan 2029 |
+| Split > 12 kW (9 e) | GWP ≥ 750 | 1 Jan 2029 |
+| Other self-contained AC & HP (8 e) | GWP ≥ 150 | 1 Jan 2030 |
+| Self-contained AC & HP ≤ 12 kW (8 c), chillers ≤ 12 kW (7 c) | all F-gases | 1 Jan 2032 |
+| Split > 12 kW (9 f) | GWP ≥ 150 | 1 Jan 2033 |
+| Split ≤ 12 kW (9 d) | all F-gases | 1 Jan 2035 |
 
-### Servicing bans (Art. 13) ❓
-- Virgin refrigerant GWP ≥ 2500 for refrigeration servicing: banned (date 2025 vs 2026 differs by source, and by equipment type).
-- Reclaimed/recycled GWP ≥ 2500 allowed until 2030; GWP ≥ 750 restrictions from 2032.
+Most have a "unless required by safety requirements on site" exception. Non-refillable containers have been banned since 2007 (pt 1, art. 11(3)).
 
-### Waste (France) ⚠️
-- Recovered HFCs → regeneration or destruction (ICPE 2790); traceability on **Trackdéchets** (arrêté 26 Jul 2022).
-- Attestation de capacité (company): 5 years, needed to buy refrigerant; requires an employee with a valid attestation d'aptitude.
+### Servicing bans (art. 13) ✅
+- Virgin GWP ≥ 2500 for servicing **refrigeration**: banned from **1 Jan 2025** (any charge; before that, only ≥ 40 t CO₂e). Reclaimed or recycled allowed until **1 Jan 2030**. Exempt: military, applications < −50 °C (13(3)).
+- Virgin GWP ≥ 2500 for servicing **AC and heat pumps**: banned from **1 Jan 2026**. Reclaimed or recycled allowed until **1 Jan 2032** (13(4)).
+- Virgin GWP ≥ 750 for servicing **stationary refrigeration except chillers**: banned from **1 Jan 2032**. Reclaimed or recycled remain allowed (13(5)).
+- Recycled = only by the company that recovered it, from the same type of equipment. Reclaimed = container labelled under art. 12(7) (batch no., reclaim facility).
+
+### Phase-down, labelling, certification ✅
+- HFC quota (Annex VII): 42.9 Mt CO₂e/yr in 2025–26, 21.7 in 2027–29 … 4.2 in 2048–49, **0 from 2050**.
+- Label (art. 12): "contains fluorinated greenhouse gases", gas name, quantity in **kg and t CO₂e**, "hermetically sealed" if applicable. Placed next to the service valves or on the part containing the gas; relabel after a retrofit.
+- Art. 10(9): existing certificates stay valid under their original conditions; refresher **at least every 7 years**, the first one by **12 Mar 2029**. Art. 11(6): only certified persons, or companies employing them, may buy F-gases. Art. 4(1): intentional release is banned.
+
+### Waste, venting, sanctions (France) ✅ unless noted
+- Recovered fluid → distributor (take-back at no extra cost, décret 2007-737 art. 8 / R543-91) for **reclamation or destruction**. Recovered fluids must be returned or treated within **1 year** of the last intervention (arrêté capacité 21/11/2025 art. 3 III). Treatment facility under ICPE 2790 ⚠️ (not re-read).
+- **BSFF on Trackdéchets** mandatory since **1 Jan 2023** (arrêté 26 Jul 2022). The issuer is the operator who collects the waste fluid. Only fluids with waste status are tracked.
+- Venting banned except for personal safety (R543-87). Emissions > 20 kg in one event or > 100 kg/yr are reported to the préfet. Recharging leaking equipment is banned.
+- Sanctions (décret 2007-737 art. 17 → R543-122/123): **5th-class contravention** (≤ €1,500, €3,000 for a repeat offence; ×5 for companies) for venting, incomplete recovery, recharging a leaking unit, a missed leak check, or handling without capacité. **3rd class** for a missing fiche d'intervention. ⚠️ The current consolidated R543-123 was not re-read (Légifrance blocks scripts).
+
+### Attestation de capacité (company) ✅
+- One per establishment, **max 5 years** (R543-99). Capacités issued after 12 Mar 2024 are capped at 12 Mar 2029. New arrêté (21/11/2025, JO 6 Dec 2025) mandatory 1 Jan 2027; the 30 Jun 2008 arrêté is repealed 31 Dec 2026.
+- Condition: **every person handling fluids under the company's responsibility** holds a suitable attestation d'aptitude (R543-106), plus suitable tools.
+- Needed to buy fluid: distributors sell only to capacité holders (R543-84; EU art. 11(6)).
 
 ## 3. CAP IFCA (arrêté du 2 juin 2015, RNCP 31334) ✅
 
 | Épreuve | Unit | Coef | Ponctuel duration | Content |
 |---|---|---|---|---|
 | EP1 Préparation d'une réalisation | UP1 | 2 | 3 h written | read plans/dossier technique, quantities, choose materials, prepare site, secure intervention |
-| EP2 Réalisation d'une installation | UP2 | 6 (incl. 1 PSE) | 8 h (incl. 1 h PSE) | **fluid part**: shape copper (cintrage, dudgeon/flare, brasage 1/2" & 1/4", valves, filter, sight glass, solenoid), nitrogen tightness test; **electrical part**: wire control circuit (contacteurs KM1/KM2, transfo 230/24 V, voyants, arrêt d'urgence) |
+| EP2 Réalisation d'une installation | UP2 | 6 (incl. 1 PSE) in the 2015 text; professional part 7 h / coef 5 on national papers, PSE a separate unit since the 2021 reform | 8 h (incl. 1 h PSE) | **fluid part**: shape copper (cintrage, dudgeon/flare, brasage 1/2" & 1/4", valves, filter, sight glass, solenoid), nitrogen tightness test; **electrical part**: wire control circuit (contacteurs KM1/KM2, transfo 230/24 V, voyants, arrêt d'urgence) |
 | EP3 Entretien, mise en service | UP3 | 4 | 6 h practical | chambre froide under N₂: **vidange azote + tirage au vide (15)**, **charge per nameplate (20)**, **remise en marche safely (15)**, **réglage pressostat BP (30)**, fill operating readings & docs (20) /100 |
 | EG1/EG2/EG3 | general | — | — | French/History, Maths-Sciences, Sport — out of scope |
 
 Bloc UP3 competences (RNCP): rendre compte · tirer au vide · manipuler fluide et huiles · contrôler l'étanchéité d'un circuit chargé · intervenir sur hydraulique/aéraulique · mesurer, comparer · régler consignes régulation/sécurité · raccorder équipements de charge/mesure · remplacer des composants.
 
-Note: the EP3 grading puts **30 % on setting the BP pressostat** → L07 is weighted accordingly.
+Note: the EP3 barème (15/20/15/30/20) comes from the 2019 national paper, not from the arrêté of 2 June 2015 (RNCP38560). The référentiel names electrical habilitation level **B1V** (NF C 18-510). The 2019 grading puts **30 % on setting the BP pressostat** → L07 is weighted accordingly.
 
 ## Sources
 
-- Arrêté 21/11/2025 (AIDA/INERIS): https://aida.ineris.fr/reglementation/arrete-211125-relatif-a-delivrance-attestations-daptitude-prevues-a-larticle-r-543
+- Regulation (EU) 2024/573, official FR text (Publications Office cellar): https://publications.europa.eu/resource/celex/32024R0573 (EUR-Lex: https://eur-lex.europa.eu/eli/reg/2024/573/oj)
+- Arrêté 21/11/2025 aptitude (AIDA/INERIS, JO n° 289 of 10/12/2025): https://aida.ineris.fr/reglementation/arrete-211125-relatif-a-delivrance-attestations-daptitude-prevues-a-larticle-r-543
+- Arrêté 21/11/2025 capacité (AIDA, JO n° 286 of 06/12/2025): https://aida.ineris.fr/reglementation/arrete-211125-relatif-a-delivrance-attestations-capacite-operateurs-prevues-a
+- Ministry note, transition period: https://www.ecologie.gouv.fr/sites/default/files/documents/Note_phase_transitoire_secteur_froid.pdf
+- Arrêté 29/02/2016 consolidated (leak-check methods, blue/red marks, fiche content): https://aida.ineris.fr/node/28187 ; arrêté 29/05/2024 (Cerfa *04): https://aida.ineris.fr/node/42798
+- Cerfa 15497*04 + notice 52064#04: https://entreprendre.service-public.fr/vosdroits/R43122
+- Code de l'environnement R543-79, -79-1, -82, -99, -106 (OPPBTP copies of the Légifrance text): https://content.preventionbtp.fr/pdf/droit_de_la_prevention/article-r543-82-du-code-de-l-environnement-fluides-frigorigenes.pdf
+- Décret 2007-737 as codified (venting ban, take-back, sanctions): https://aida.ineris.fr/node/26896
+- Arrêté 26/07/2022 BSFF / Trackdéchets: https://content.preventionbtp.fr/pdf/droit_de_la_prevention/arrete-du-26-juillet-2022-relatif-aux-bordereaux-de-suivi-des-dechets-dangereux-de-fluides-frigorigenes-et-autres-dechets-dangereux-de-fluides-en-contenants-sous-pression.pdf
 - AFABAT, F-Gas III reform: https://www.afabat.fr/137-Fluides-frigorigenes-ce-qui-change-avec-la-reforme-F-Gas-III.html
 - FFB, F-Gas III essentials: https://www.ffbatiment.fr/actualites-batiment/actualite-bam/gaz-fluores-rappel-dispositions-essentielles-reglement-europeen-f-gas-iii
 - Projet Celsius, bans 2027: https://projetcelsius.com/blog/f-gaz-climatisation-interdite-2027/

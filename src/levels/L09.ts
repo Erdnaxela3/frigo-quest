@@ -7,12 +7,12 @@ import type { Action, GameState, Level, Socket, Step, Tier } from '../game/types
 const TEST = 30; // bar rel, N₂ tightness test of the section
 const HOLD_S = 5 * 60;
 const VAC = 0.002; // bar abs (2 mbar, CAP)
-const FULL_WARN = 0.85; // receiver liquid fraction shown as "presque plein"
+const FULL_WARN = 0.8; // receiver liquid fraction shown as "presque plein"
 const UNCAP_MAX_S = 10 * 60;
 const SEATS = ['Contre-siège arrière', 'Position milieu', 'Contre-siège avant'];
 const FILTERS = {
   dml: 'DML 083 : 100 % tamis moléculaire, pour HFC/HFO et huile POE',
-  dcl: 'DCL 083 : alumine activée + tamis, pour CFC/HCFC et huile minérale',
+  dcl: 'DCL 083 : 80 % tamis moléculaire + 20 % alumine activée, prévu pour huile minérale / alkylbenzène',
 } as const;
 
 const rel = (s: GameState, id: string) => toRel(P(s, id));
@@ -33,7 +33,7 @@ const L09: Level = {
   lesson: 'composants',
   scene: 'PLATINE',
   fluid: 'R32',
-  briefing: 'Voyant liquide qui bulle, indicateur d\'humidité jaune. Remplacez le filtre déshydrateur sans récupérer toute la charge : '
+  briefing: 'Bulles au voyant liquide, indicateur d\'humidité jaune. Remplacez le filtre déshydrateur sans récupérer toute la charge : '
     + 'commencez par l\'exercice des vannes de service, mesurez l\'écart de température entrée/sortie du filtre, faites un pump-down '
     + 'sur le robinet de sortie réservoir, isolez la section du filtre, consignez, récupérez le peu de fluide restant dans la section, '
     + 'remplacez le filtre, testez à l\'azote, tirez au vide, remettez en service et contrôlez.',
@@ -109,25 +109,25 @@ const L09: Level = {
     {
       id: 'remove', label: 'Déposer l\'ancien filtre',
       done: (s) => !!s.vars.oldOut,
-      hints: ['Coupe-tube, jamais de scie : les copeaux partent dans le circuit.', 'Commande « Couper au coupe-tube » (guidé : dévisser les dudgeons).'],
+      hints: ['Coupe-tube, jamais de scie : les copeaux partent dans le circuit.', 'Commande « Couper le tube au coupe-tube » (guidé : « Dévisser les écrous dudgeon »).'],
     },
     {
       id: 'fit', label: 'Poser le filtre neuf (bon type, flèche dans le sens du fluide, bouchons au dernier moment) et le raccorder',
       done: (s) => !!s.vars.joined && !s.opened.length,
       hints: ['R32 + huile POE : tamis moléculaire. La flèche va du réservoir vers le voyant.',
-        'Choisissez le DML, retirez ses bouchons, présentez-le flèche vers le voyant, puis raccordez (brasure sous balayage d\'azote à faible débit par la prise liquide).'],
+        'Choisissez le DML, retirez ses bouchons, présentez-le flèche vers le voyant, puis raccordez. Brasure : balayage d\'azote à faible débit (jaune du manifold sur le détendeur azote réglé vers 0,2 bar, azote ouvert, vanne HP du manifold ouverte vers la prise liquide).'],
     },
     {
       id: 'n2', label: `Essai d'étanchéité de la section à l'azote (${TEST} bar rel, ${HOLD_S / 60} min, bouteille fermée)`,
       done: (s) => !!s.vars.n2ok,
-      hints: ['Azote déshydraté avec détendeur, par la prise liquide.',
+      hints: ['Azote déshydraté avec détendeur, par la prise liquide. L\'azote comprimé chauffe puis refroidit : seule une chute non expliquée par la température signe une fuite.',
         `Flexible jaune sur le détendeur azote, détendeur à ${TEST} bar, ouvrez, puis fermez la bouteille et observez ${HOLD_S / 60} min sans chute.`],
     },
     {
       id: 'vacuum', label: 'Vidanger l\'azote puis tirer la section au vide (< 2 mbar)',
       done: (s) => P(s, 'filt') <= VAC,
-      hints: ['L\'azote se rejette par le détendeur (consigne à 0), puis pompe à vide sur le flexible jaune.',
-        'Consigne du détendeur à 0 bar rel, attendez, jaune sur la pompe à vide, pompe en marche jusqu\'à moins de 2 mbar.'],
+      hints: ['L\'azote se rejette à l\'air (jamais de fluide frigorigène), puis pompe à vide sur le flexible jaune.',
+        'Consigne du détendeur à 0 bar rel, puis déposez le flexible jaune du détendeur (« déposer côté prise ») pour finir de vider ; jaune sur la pompe à vide, pompe en marche jusqu\'à moins de 2 mbar.'],
     },
     {
       id: 'reopen', label: 'Isoler la pompe, déposer le flexible de la prise liquide, ouvrir la vanne liquide puis le robinet réservoir',
@@ -249,8 +249,11 @@ const L09: Level = {
     if (s.running && rel(s, 'comp') < -0.05) s.vars.suctionVacuum = true;
     const hold = s.vars.joined && !s.vars.n2ok && rel(s, 'filt') >= TEST - 1 && !s.bench.n2!.open;
     if (!hold) { delete s.vars.holdT0; return; }
-    if (s.vars.holdT0 === undefined) { s.vars.holdT0 = s.t; s.vars.holdP0 = rel(s, 'filt'); }
-    if (s.t - (s.vars.holdT0 as number) >= HOLD_S && (s.vars.holdP0 as number) - rel(s, 'filt') < 0.1) s.vars.n2ok = true;
+    const K = s.circuit.volumes.filt.T + 273.15;
+    if (s.vars.holdT0 === undefined) Object.assign(s.vars, { holdT0: s.t, holdP0: P(s, 'filt'), holdK0: K });
+    // the freshly filled N₂ cools toward ambient: only a drop not explained by temperature is a leak
+    const drop = (s.vars.holdP0 as number) - P(s, 'filt') * (s.vars.holdK0 as number) / K;
+    if (s.t - (s.vars.holdT0 as number) >= HOLD_S && drop < 0.1) s.vars.n2ok = true;
   },
 
   inspect(s, target) {
@@ -260,7 +263,7 @@ const L09: Level = {
     }
     if (target === 'comp.receiver') {
       const f = vs(s, 'hp').liquidFraction, V = s.circuit.volumes.hp.V;
-      return `Réservoir liquide (côté HP ${fmt(V)} L avec le condenseur) : niveau ≈ ${Math.round(f * 100)} %${f >= FULL_WARN ? ', PRESQUE PLEIN !' : '.'}`;
+      return `Réservoir liquide (côté HP ${fmt(V)} L avec le condenseur) : niveau ≈ ${Math.round(f * 100)} %${f >= FULL_WARN ? ', PRESQUE PLEIN : arrêtez le pump-down !' : '.'}`;
     }
     if (target === 'comp.filter') {
       if (!s.vars.joined) return `Filtre déshydrateur ${FILTERS.dml.split(' :')[0]}, ${brazed(s) ? 'brasé' : 'à dudgeons'}, flèche vers le voyant.`;
@@ -272,7 +275,7 @@ const L09: Level = {
   rules: [
     {
       id: 'pumpdown-overfill', severity: 'critical', skill: 'A1:9.08', lesson: 'composants',
-      message: 'Pump-down poursuivi réservoir plein : le liquide remplit tout le volume, la HP s\'envole (déclenchement KP5, risque d\'éclatement hydraulique). '
+      message: 'Pump-down poursuivi réservoir plein : le liquide remplit tout le volume, la HP s\'envole (déclenchement KP6, risque d\'éclatement hydraulique). '
         + 'Arrêtez le pump-down et récupérez le reste.',
       when: ({ s }) => s.plant.kp5.tripped || (s.running && vs(s, 'hp').phase === 'liquidFull'),
     },
@@ -307,8 +310,8 @@ const L09: Level = {
       when: ({ a, s }) => a.type === 'custom' && a.id === 'join' && s.vars.arrow === 'back',
     },
     {
-      id: 'wrong-filter', severity: 'major', skill: 'A1:9.07', lesson: 'composants',
-      message: 'Filtre pour CFC/HCFC et huile minérale : avec un HFC et de l\'huile POE, il faut un filtre 100 % tamis moléculaire.',
+      id: 'wrong-filter', severity: 'minor', skill: 'A1:9.07', lesson: 'composants',
+      message: 'Filtre DCL (avec alumine, prévu pour huile minérale / AB) : avec du R32 et de l\'huile POE, Danfoss préconise le DML, 100 % tamis moléculaire. Le DCL se réserve plutôt au nettoyage après acidité.',
       when: ({ a, s }) => a.type === 'custom' && a.id === 'join' && s.vars.type === 'dcl',
     },
     {

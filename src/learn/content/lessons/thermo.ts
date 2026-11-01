@@ -120,7 +120,7 @@ Conséquences pratiques :
       body: `- Lire la pression relative du manomètre et l'utiliser dans une formule de gaz parfait : la formule demande des **bar abs** et des **kelvins**.
 - Convertir un écart de température en ajoutant 273 : une surchauffe de 6 °C vaut **6 K**, pas 279 K.
 - Croire que « 0 bar » au manomètre veut dire « vide » : c'est la pression atmosphérique.
-- Utiliser la température de bulle pour calculer la surchauffe d'un R407C : on sous-estime la surchauffe de plusieurs kelvins et on risque de régler le détendeur trop fermé.
+- Utiliser la température de bulle pour calculer la surchauffe d'un R407C : on **surestime** la surchauffe de plusieurs kelvins et on risque d'ouvrir trop le détendeur (retour de liquide au compresseur).
 - Charger un R449A en phase vapeur : la composition du mélange change et l'installation ne retrouve plus ses performances.
 - Penser qu'un HFO pur a un glissement : c'est le **mélange** qui crée le glissement, pas la famille chimique.`,
     },

@@ -29,6 +29,11 @@ export default function LevelsPage() {
       <h1>Niveaux</h1>
       <p className="muted">Interventions sur la platine didactique split R32. Chaque niveau se joue en mode guidé, standard ou examen.</p>
       <div className="grid">
+        <div className="card lv-card">
+          <h3><a href="#/niveau/LIBRE">Atelier libre</a></h3>
+          <p className="muted lv-small">Platine en accès total, sans consignes ni note. Pannes à injecter, choix du fluide.</p>
+          <div className="row"><a className="btn lv-mini" href="#/niveau/LIBRE-R32/guide">Platine R32</a><a className="btn lv-mini" href="#/niveau/LIBRE">Autre fluide…</a></div>
+        </div>
         {PLANNED.map(([id, title]) => {
           const l = LEVELS.find((x) => x.id === id), r = levels[id];
           if (!l) {

@@ -51,7 +51,13 @@ describe('L14', () => {
   });
 
   it('unexplained loss declared consistent → missing-leak-declaration', () => {
-    const s = run(start('examen', seedFor('ecart')), [read, { type: 'answer', field: 'balance', value: 0 }]);
+    const steps = L14.perfectRun('examen').map((st) => (s: GameState) => {
+      const a = typeof st === 'function' ? st(s) : st;
+      return a.type === 'answer' && a.field === 'balance' ? { ...a, value: 0 } : a;
+    });
+    const unsigned = play(L14, start('examen', seedFor('ecart')), steps.slice(0, -2));
+    expect(ids(unsigned)).toEqual([]); // examen: nothing revealed before signing
+    const s = play(L14, unsigned, steps.slice(-2));
     expect(ids(s)).toEqual(['missing-leak-declaration']);
   });
 

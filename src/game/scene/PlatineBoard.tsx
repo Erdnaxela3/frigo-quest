@@ -124,7 +124,7 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           <Target id="comp.receiver"><Receiver /></Target>
           <Target id="comp.filter"><Filter /></Target>
           <Target id="comp.sightglass"><SightGlass state={view.sightGlass} /></Target>
-          <Target id="comp.kp5"><KP b={L.kp5} model="KP5" hp /></Target>
+          <Target id="comp.kp5"><KP b={L.kp5} model="KP6" hp /></Target>
           <Target id="comp.kp1"><KP b={L.kp1} model="KP1" /></Target>
           <Target id="comp.solenoid"><Solenoid on={running} /></Target>
           <Target id="comp.txv"><TXV /></Target>
@@ -183,7 +183,7 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           <Plate x={1076} y={576} text="PRISE ÉVAP." small />
           <Plate x={655} y={650} text="V. GAZ 3 VOIES" small />
           <Plate x={628} y={502} text="ÉLECTROVANNE" small />
-          <Plate x={760} y={260} text="DÉTENDEUR TE2" small />
+          <Plate x={760} y={260} text="DÉTENDEUR THERMO." small />
           <Plate x={860} y={346} text="ÉVAPORATEUR" />
           <Plate x={1050} y={372} text="BULBE" small />
           <Plate x={1098} y={290} text="VENTILATEUR ÉVAP." small />

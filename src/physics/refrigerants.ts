@@ -5,6 +5,7 @@ export const R = 8.314462618;
 
 // simplification: saturation tables are approximate (±2 %) values transcribed from manufacturer P/T charts.
 // Cross-check against CoolProp before using them in exam-grade numeric questions.
+// GWP = Regulation (EU) 2024/573 values: AR4 for saturated HFCs (Annex I), newer values for HFOs and HCs.
 const F: Fluid[] = [
   {
     id: 'R32', name: 'R32 (difluorométhane)', gwp: 675, safety: 'A2L', glide: 0, molarMass: 52.02,
@@ -28,14 +29,14 @@ const F: Fluid[] = [
       [20, 5.72, 5.72], [30, 7.70, 7.70], [40, 10.17, 10.17], [50, 13.18, 13.18], [60, 16.82, 16.82]],
   },
   {
-    id: 'R290', name: 'R290 (propane)', gwp: 3, safety: 'A3', glide: 0, molarMass: 44.1,
+    id: 'R290', name: 'R290 (propane)', gwp: 0.02, safety: 'A3', glide: 0, molarMass: 44.1,
     rhoLiq25: 493, beta: 0.0033, critical: { T: 96.7, P: 42.5 }, lfl: 0.038, oil: 'Minérale / PAO / POE',
     uses: 'Vitrines plug-in, PAC monobloc, petits équipements',
     sat: [[-40, 1.11, 1.11], [-30, 1.68, 1.68], [-20, 2.45, 2.45], [-10, 3.45, 3.45], [0, 4.74, 4.74], [10, 6.36, 6.36],
       [20, 8.36, 8.36], [30, 10.79, 10.79], [40, 13.69, 13.69], [50, 17.13, 17.13], [60, 21.17, 21.17]],
   },
   {
-    id: 'R1234yf', name: 'R1234yf (HFO)', gwp: 4, safety: 'A2L', glide: 0, molarMass: 114.04,
+    id: 'R1234yf', name: 'R1234yf (HFO)', gwp: 0.501, safety: 'A2L', glide: 0, molarMass: 114.04,
     rhoLiq25: 1092, beta: 0.0030, critical: { T: 94.7, P: 33.8 }, lfl: 0.289, oil: 'PAG (auto) / POE',
     uses: 'Climatisation automobile, remplacement du R134a',
     sat: [[-40, 0.62, 0.62], [-30, 0.99, 0.99], [-20, 1.51, 1.51], [-10, 2.22, 2.22], [0, 3.16, 3.16], [10, 4.39, 4.39],
@@ -56,7 +57,7 @@ const F: Fluid[] = [
       [20, 9.70, 8.04], [30, 12.64, 10.66], [40, 16.19, 13.89], [50, 20.44, 17.80], [60, 25.47, 22.47]],
   },
   {
-    id: 'R449A', name: 'R449A', gwp: 1397, safety: 'A1', glide: 4.5, molarMass: 87.2,
+    id: 'R449A', name: 'R449A', gwp: 1396, safety: 'A1', glide: 4.5, molarMass: 87.2,
     rhoLiq25: 1113, beta: 0.0034, critical: { T: 81.5, P: 44.5 }, oil: 'POE',
     uses: 'Froid commercial, remplacement du R404A',
     sat: [[-40, 1.40, 1.00], [-30, 2.10, 1.55], [-20, 3.05, 2.33], [-10, 4.30, 3.38], [0, 5.92, 4.76], [10, 7.97, 6.52],
@@ -137,5 +138,13 @@ export function leakCheckMonths(t: number, hasLDS = false, hermetic = false): nu
   if (hermetic && t < 10) return null;
   if (t < 5) return null;
   const base = t >= 500 ? 3 : t >= 50 ? 6 : 12;
+  return hasLDS ? base * 2 : base;
+}
+
+/** 2024/573 art. 5: Annex II HFOs (here R1234yf) are thresholded in kg (1/10/100 kg, hermetic exempt < 2 kg), the rest in t CO₂e. */
+export function leakCheckFor(id: FluidId, kg: number, hasLDS = false, hermetic = false): number | null {
+  if (id !== 'R1234yf') return leakCheckMonths(tco2e(id, kg), hasLDS, hermetic);
+  if ((hermetic && kg < 2) || kg < 1) return null;
+  const base = kg >= 100 ? 3 : kg >= 10 ? 6 : 12;
   return hasLDS ? base * 2 : base;
 }

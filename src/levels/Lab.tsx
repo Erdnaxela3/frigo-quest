@@ -129,7 +129,9 @@ export default function Lab() {
 
   const vesselPanel = (id: VesselId) => {
     const v = vol(b, id), s = id === 'A' ? sA : sB, ph = phaseText(b, id);
-    const ts = s.P > 0.05 && s.P < FLUIDS[f].critical.P && !isSupercritical(f, v.T) ? tsat(f, s.P) : NaN;
+    const sat = s.P > 0.05 && s.P < FLUIDS[f].critical.P && !isSupercritical(f, v.T);
+    const ts = sat ? tsat(f, s.P) : NaN, tb = sat ? tsat(f, s.P, 'bubble') : NaN;
+    const glide = Math.abs(ts - tb) > 0.5;
     return (
       <div className="lab-vpanel" key={id}>
         <div className="row lab-vhead">
@@ -140,7 +142,8 @@ export default function Lab() {
         <div className="lab-readouts">
           <Readout label="Manomètre" value={toRel(s.P)} unit="bar" digits={2} />
           <Readout label="Absolue" value={s.P} unit="bar abs" digits={s.P < 1 ? 3 : 2} />
-          <Readout label="Tsat lue" value={ts} unit="°C" />
+          <Readout label={glide ? 'T rosée lue' : 'Tsat lue'} value={ts} unit="°C" />
+          {glide && <Readout label="T bulle lue" value={tb} unit="°C" />}
           <Readout label="T réelle" value={v.T} unit="°C" />
           <Readout label="Fluide" value={v.mRef * 1000} unit="g" digits={0} />
           {s.PN2 + s.PAir > 0.001 && <Readout label="N₂ + air" value={s.PN2 + s.PAir} unit="bar" digits={2} />}

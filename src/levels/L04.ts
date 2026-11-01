@@ -119,13 +119,14 @@ const L04: Level = {
       done: (s) => maxSys(s) <= P_ATM + 0.05,
       hints: ['L\'azote se rejette à l\'air, mais par le manifold, pas en dévissant un flexible sous pression.',
         'Retirez les bouchons BP et HP et le chapeau de vanne gaz, raccordez bleu sur BP et rouge sur HP, vanne gaz en position milieu, '
-        + 'puis ouvrez BP, HP et la vanne vide du manifold avec le flexible de vide libre.', ['port.lp', 'port.hp', 'valve.gas']],
+        + 'raccordez le flexible de vide sur la voie vide du manifold en laissant son autre extrémité libre, puis ouvrez les vannes BP, HP et vide du manifold.',
+        ['port.lp', 'port.hp', 'valve.gas']],
     },
     {
       id: 'connect', label: 'Ouvrir le circuit côté BP et côté HP, électrovanne ouverte (ouverture manuelle)',
       done: (s) => lpSide(s) && hpSide(s) && s.valves.solenoid,
       hints: ['Tirer par un seul côté laisse la HP piégée derrière le compresseur et l\'électrovanne.',
-        'Manifold BP et HP ouverts, vanne gaz en position milieu, posez l\'ouverture manuelle de l\'électrovanne.', ['comp.solenoid', 'valve.gas']],
+        'Manifold BP et HP ouverts, vanne gaz en position milieu, posez l\'ouverture manuelle de l\'électrovanne (clé sur l\'électrovanne).', ['comp.solenoid', 'valve.gas']],
     },
     {
       id: 'pump', label: 'Pompe sur la voie vide du manifold, vacuomètre côté circuit, pompe en marche',
@@ -143,7 +144,7 @@ const L04: Level = {
       id: 'hold', label: 'Essai de tenue : isoler la pompe, l\'arrêter, observer 10 min, conclure',
       done: (s) => !!s.answers.verdict?.ok && !!s.vars.verdictValid && s.answers.verdict.value !== 1,
       hints: ['Toujours isoler avant d\'arrêter la pompe. Palier ≈ humidité, remontée linéaire = fuite.',
-        'Fermez la vanne vide du manifold, arrêtez la pompe, attendez 10 min, puis choisissez votre conclusion. Humidité : retirez encore et refaites l\'essai.'],
+        'Fermez la vanne vide du manifold, arrêtez la pompe, attendez 10 min, puis choisissez votre conclusion. Humidité : tirez encore au vide, puis refaites l\'essai.'],
     },
   ],
 

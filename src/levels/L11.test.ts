@@ -42,6 +42,7 @@ describe('L11', () => {
     const t = dispatch(L11, s, { type: 'answer', field: 'HPstill', value: Math.round(gaugeP(s, 'mf.hp') * 100) / 100 });
     expect(t.answers.HPstill.ok).toBe(true);
     expect(t.vars.standstill).toBeFalsy();
+    expect(t.toast?.text).toMatch(/trop tôt/); // shown, not only journaled
   });
 
   it('manual purge is critical: emission, and an exam ends', () => {

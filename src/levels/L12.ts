@@ -66,7 +66,7 @@ const SIG = [
   'BP ↑, SH → 0 (retour liquide), SC ↓',
   'BP ↑, HP ↓ (elles se rapprochent), SH ↑, intensité faible',
   'Compresseur en pump-down : BP tirée jusqu\'à la coupure KP1, cycles courts, voyant plein',
-  'Compresseur à l\'arrêt, pressions équilibrées, consigne au-dessus de la T ambiante',
+  'Compresseur à l\'arrêt, pressions équilibrées, consigne au-dessus de la température de la pièce',
 ];
 const SEE = ['L02 et L06', 'L06', 'L11', 'L07', 'L07', 'L08', 'L07', 'L09', 'L08', 'L08', 'L10', 'L09', 'L07'];
 
@@ -75,7 +75,8 @@ const COMBOS = [[0, 3], [7, 4], [1, 6], [10, 2], [8, 3]];
 const AIRFLOW: Record<number, TargetId> = { 3: 'comp.condenser', 4: 'comp.condFan', 5: 'comp.evaporator', 6: 'comp.evapFan' };
 const STAINS: JointId[] = ['joint.filterIn', 'joint.txvIn', 'joint.evapOut', 'joint.condOut', 'joint.gasValve'];
 const SUCTION_T: TargetId[] = ['comp.txvBulb', 'joint.evapOut', 'joint.compSuction', 'valve.gas', 'port.lp', 'joint.gasValve', 'port.evap'];
-const LIQUID_T: TargetId[] = ['joint.condOut', 'comp.receiver', 'valve.receiver', 'comp.filter', 'joint.filterIn'];
+const LIQUID_T: TargetId[] = ['joint.condOut', 'comp.receiver', 'valve.receiver', 'comp.filter', 'joint.filterIn',
+  'joint.filterOut', 'comp.sightglass', 'valve.liquid', 'port.liq', 'joint.liqValve', 'comp.solenoid', 'joint.txvIn'];
 const N = 5, REF_MIN = 4; // efficiency reference: minutes of measurement per scenario
 
 export interface Scen { c: number[]; m: number; Tamb: number; j: JointId }
@@ -215,10 +216,10 @@ const L12: Level = {
   tierNotes: {
     guide: 'Une seule panne franche par scénario. Tableau des signatures disponible (bouton dédié). Mesurez SH et SC avant de conclure.',
     standard: 'Tableau masqué, pannes voisines (sosies) et intensités aléatoires, air extérieur variable.',
-    examen: 'Deux pannes simultanées dans certains scénarios (l\'une ou l\'autre est acceptée, avec son remède). 30 min pour les 5.',
+    examen: 'Deux pannes simultanées dans certains scénarios (l\'une ou l\'autre est acceptée, avec son remède). 40 min pour les 5 (chaque mesure compte 1 à 3 min).',
   },
   tools: ['hand', 'wrench', 'thermometer', 'clamp'],
-  timeLimit: 30 * 60,
+  timeLimit: 40 * 60,
 
   setup(tier, rng) {
     const s = makePlatine({ levelId: 'L12', tier, running: true });

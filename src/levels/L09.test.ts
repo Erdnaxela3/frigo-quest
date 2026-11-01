@@ -33,6 +33,16 @@ describe('L09', () => {
     });
   }
 
+  it('N₂ hold: a full, still-warm fill cooling toward ambient is not a leak', () => {
+    const steps = L09.perfectRun('guide');
+    const i = steps.findIndex((st) => typeof st !== 'function' && st.type === 'setN2' && st.setpoint > 20);
+    let s = play(L09, start('guide'), steps.slice(0, i + 1));
+    while (toRel(P(s, 'filt')) < 29.8) s = run(s, [{ type: 'wait', seconds: 0.5 }]);
+    s = run(s, [{ type: 'device', device: 'n2', on: false }]);
+    s = run(s, [{ type: 'wait', seconds: 310 }]);
+    expect(s.vars.n2ok).toBe(true);
+  });
+
   it('the board starts with a restricted filter: ΔT > 2 K and bubbles', () => {
     const s = start();
     expect(s.cycle!.filterDT).toBeGreaterThan(2);

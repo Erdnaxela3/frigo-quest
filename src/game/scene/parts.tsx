@@ -116,6 +116,7 @@ export function CrankHeater({ on }: { on: boolean }) {
       <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={3} fill={on ? '#b4532a' : '#7a3b22'} stroke="#3b1c10" />
       {Array.from({ length: 16 }, (_, i) => <line key={i} x1={b.x + 6 + i * 8.2} y1={b.y + 2} x2={b.x + 6 + i * 8.2} y2={b.y + b.h - 2} stroke="#000" strokeOpacity={0.3} />)}
       <path d={`M${b.x + 2},${b.y + 7} q-14,4 -14,30`} stroke="#222" strokeWidth={2.4} fill="none" />
+      <rect x={b.x - 4} y={b.y - 6} width={b.w + 8} height={b.h + 12} fill="transparent" pointerEvents="all" />
     </g>
   );
 }
@@ -177,6 +178,7 @@ export function Schrader({ from, to, hose, right }: { from: Pt; to: Pt; hose?: H
       {hose
         ? <rect x={x - 6.5} y={y1 - 12} width={13} height={16} rx={2} className={`pt-coupler h-${hose}`} />
         : <rect x={x - 5.5} y={y1 - 8} width={11} height={9} rx={2} fill="#1d1f22" stroke="#000" />}
+      <rect x={x - 12} y={y0 - 2} width={24} height={y1 - y0 + 10} fill="transparent" pointerEvents="all" />
     </g>
   );
 }
@@ -259,7 +261,7 @@ export function TXV() {
     <g filter="url(#pt-shadow)">
       <rect x={cx - 6} y={cy + 10} width={12} height={13} rx={1} fill="url(#pt-brass)" stroke="#6d5216" />
       <rect x={cx - 16} y={cy - 11} width={32} height={22} rx={3} fill="url(#pt-brass)" stroke="#6d5216" />
-      <text x={cx} y={cy + 3} textAnchor="middle" fontSize={7} fontWeight={700} fill="#4a370c">TE2</text>
+      <text x={cx} y={cy + 3} textAnchor="middle" fontSize={7} fontWeight={700} fill="#4a370c">TEV</text>
       <rect x={cx - 5} y={cy - 23} width={10} height={13} fill="url(#pt-brass)" stroke="#6d5216" />
       <rect x={cx - 19} y={cy - 30} width={38} height={7} rx={2} fill="url(#pt-steel)" stroke="#555" />
       <path d={`M${cx - 17},${cy - 30} Q${cx},${cy - 46} ${cx + 17},${cy - 30} Z`} fill="url(#pt-steel)" stroke="#555" />

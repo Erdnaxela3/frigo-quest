@@ -54,8 +54,9 @@ function analyse(fluid: FluidId, v: Volume): Full {
       rhoRef = rvs;
       const Pb = psat(fluid, v.T, 'bubble'), Pd = psat(fluid, v.T, 'dew');
       if (lf <= 1) {
-        Pref = Pd + (Pb - Pd) * lf;
         mLiq = lf * Vm * rhoL;
+        // zeotropes: dew pressure when the last drop is vapour, bubble pressure when it is all liquid (mass basis)
+        Pref = Pd + (Pb - Pd) * (mLiq / v.mRef);
         phase = 'twoPhase';
       } else {
         Pref = Pb + (LIQ_FULL_STIFF * (v.mRef / (Vm * rhoL) - 1)) / f.beta;

@@ -79,10 +79,10 @@ Une bouteille contenant du fluide récupéré est un **déchet** (sauf réutilis
     {
       title: 'Traçabilité et filière déchets',
       body: `Chaque kilo doit être tracé (items 5.07 et 5.08) :
-- **Fiche d'intervention Cerfa n° 15497** : quantités **récupérées** et **chargées**, fluide, identification de la bouteille, signée par l'entreprise et le détenteur (à vérifier).
+- **Fiche d'intervention Cerfa n° 15497\\*04** : quantités **récupérées** et **chargées**, fluide, identification de la bouteille, signée par l'opérateur et le détenteur (non exigée sous 5 t CO₂e), conservée 5 ans par chacun.
 - **Registre** de l'équipement mis à jour.
-- La bouteille est rendue au **distributeur** ou à un centre de traitement : **régénération** ou **destruction** dans une installation autorisée (rubrique ICPE 2790).
-- Le transfert est suivi par le **BSFF** (bordereau de suivi des fluides frigorigènes), dématérialisé sur **Trackdéchets** (à vérifier pour les modalités).
+- La bouteille est rendue au **distributeur** (reprise sans frais) ou à un centre de traitement, au plus tard un an après l'intervention : **régénération** ou **destruction** dans une installation autorisée (rubrique ICPE 2790).
+- Le transfert est suivi par le **BSFF** (bordereau de suivi des fluides frigorigènes), obligatoire sur **Trackdéchets** depuis le 1er janvier 2023, émis par l'opérateur qui collecte.
 - Transport : bouteilles **debout, calées, robinet protégé**, véhicule ventilé ; les règles du transport de matières dangereuses s'appliquent selon les quantités (à vérifier).
 
 Le bilan de l'entreprise doit tomber juste : fluide acheté = fluide chargé + fluide en stock, et fluide récupéré = fluide rendu.`,

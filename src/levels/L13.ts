@@ -106,9 +106,9 @@ const L13: Level = {
   scene: 'PLATINE',
   fluid: 'R290',
   briefing: 'Platine R290 (propane, A3 : très inflammable) installée dans la réserve d\'un magasin ouvert au public — elle tient lieu de la '
-    + 'vitrine réfrigérée « plug-in » de la fiche. Le compresseur est à remplacer. Évaluez les risques (local, sources d\'inflammation, public, '
+    + 'vitrine réfrigérée autonome (« plug-in ») à dépanner. Le compresseur est à remplacer. Évaluez les risques (local, sources d\'inflammation, public, '
     + 'extincteur), équipez-vous (détecteur HC au sol, ventilateur ATEX, matériel A3), récupérez la charge dans une bouteille HC, purgez à '
-    + 'l\'azote jusqu\'à 0 % LIE à l\'ouverture, puis seulement ouvrez et brasez. Essai azote, vide, charge au poids à ± 5 g, contrôle au '
+    + 'l\'azote, vérifiez 0 % LIE au détecteur à l\'ouverture, et seulement ensuite brasez. Essai azote, vide, charge au poids à ± 5 g, contrôle au '
     + 'détecteur et rapport. Mini-défi : limites de charge (LIE R290 = 0,038 kg/m³).',
   tierNotes: {
     guide: 'Mise en sécurité seulement : récupération, purge à l\'azote, contrôle au détecteur (pas de remplacement de composant).',
@@ -123,6 +123,7 @@ const L13: Level = {
     const charge = ex ? [0.15, 0.18, 0.2][Math.floor(rng() * 3)] : 0.2;
     const s = makePlatine({
       levelId: 'L13', tier, fluid: 'R290', charge, Tamb: 20, Troom: 20,
+      nameplate: `Plaque signalétique : R290 · charge ${Math.round(charge * 1000)} g · PS HP 25 bar / BP 15 bar · 230 V 50 Hz`,
       hoses: [
         { id: 'blue', color: 'blue', manifold: 'mf.lp', port: null, valve: true },
         { id: 'red', color: 'red', manifold: 'mf.hp', port: null, valve: true },
@@ -150,24 +151,25 @@ const L13: Level = {
       id: 'detector', label: 'Détecteur HC en marche, posé au sol, piles bonnes : relevé initial 0 % LIE',
       done: (s) => detectorReady(s) && v(s, 'ambient'),
       hints: ['Le propane est 1,5 fois plus lourd que l\'air : il s\'accumule au ras du sol.',
-        'Panneau détecteur : marche, position « au sol » (piles neuves si « batterie faible »), puis cliquez la platine avec le détecteur.',
+        'Section « Sécurité fluide inflammable » : détecteur en marche, position « au sol » (« Remplacer les piles » si elles sont faibles), '
+        + 'puis prenez l\'outil « Détecteur de gaz HC » et cliquez la platine.',
         ['joint.compSuction']],
     },
     {
       id: 'fan', label: 'Ventilateur ATEX en marche',
       done: (s) => !!s.room?.fan?.on,
-      hints: ['Diluer et évacuer toute fuite avant qu\'elle n\'atteigne la LIE.', 'Panneau local : « Ventilateur ATEX » en marche.'],
+      hints: ['Diluer et évacuer toute fuite avant qu\'elle n\'atteigne la LIE.', 'Section « Sécurité fluide inflammable » : bouton « Ventilateur ATEX » en marche.'],
     },
     {
       id: 'sources', label: 'Couper / retirer toutes les sources d\'inflammation de la zone',
       done: (s) => !liveSource(s),
       hints: ['Prises, interrupteurs, radiateur, cigarette… et ce qui ne se voit pas au premier coup d\'œil.',
-        'Panneau sources d\'inflammation : « Couper / retirer » chacune. Inspectez la zone pour les trouver toutes.'],
+        'Liste « Sources d\'inflammation » : « Couper / retirer » chacune. L\'inspection de la zone (commande « Analyse ») peut en révéler d\'autres.'],
     },
     {
       id: 'lockout', label: 'Consigner la platine (sectionneur hors zone cadenassé, VAT)',
       done: consigned,
-      hints: ['On débranche / sépare hors de la zone, jamais une fiche sous charge dans la zone.', 'Coffret électrique : « Consigner » puis « VAT ».', ['comp.elecBox']],
+      hints: ['On débranche / sépare hors de la zone, jamais une fiche sous charge dans la zone.', 'Coffret électrique (outil main) : « Consigner (cadenas) » puis « Vérifier la tension (VAT) ».', ['comp.elecBox']],
     },
     {
       id: 'equipment', label: 'Choisir la bouteille de récupération et la station adaptées au R290',
@@ -180,7 +182,7 @@ const L13: Level = {
       done: (s) => gainedKg(s) > 0.05 && sysP(s) <= P_ATM && !s.bench.recovery!.on && !s.bench.cylinder?.gas && !onBoard(s) && !onCyl(s),
       hints: ['Comme une récupération classique : liquide d\'abord, puis vapeur des deux côtés.',
         'Rouge → prise liquide, bleu → prise BP, jaune → station (entrée) vanne ouverte, flexible « rec » : station (sortie) → vanne gaz bouteille. '
-        + 'Ouvrez la bouteille, HP puis BP au manifold (vanne gaz milieu), station en marche jusqu\'à la coupure, puis arrêt, bouteille fermée, flexibles déposés.',
+        + 'Ouvrez la bouteille, HP puis BP au manifold (vanne gaz milieu), station en marche jusqu\'à la coupure (manomètres stabilisés vers −0,3 bar), puis arrêt, bouteille fermée, flexibles déposés.',
         ['port.liq', 'port.lp', 'valve.gas']],
     },
     {
@@ -376,7 +378,7 @@ const L13: Level = {
         need(v(s, 'brazed'), 'Brasez d\'abord.');
         s.vars.n2Test = true;
         later(s, 15);
-        return 'Essai azote : 15 min sous pression, pas de chute, brasures bulle-testées : étanche. Azote évacué dehors.';
+        return 'Essai azote : 15 min sous pression, pas de chute, brasures contrôlées au produit moussant : étanche. Azote évacué dehors.';
       case 'vac':
         need(v(s, 'n2Test'), 'Faites d\'abord l\'essai azote.');
         vacuumCircuit(s);

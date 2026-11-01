@@ -69,6 +69,7 @@ describe('L10', () => {
   it('oil poured in the sink → oil-in-sink', () => {
     const s = dispatch(L10, until('guide', 7, (a) => a.type === 'custom' && a.id === 'drain-waste'), { type: 'custom', id: 'drain-sink' });
     expect(ids(s)).toEqual(['oil-in-sink']);
+    expect(s.done).toContain('remove'); // penalised, but the level stays finishable
   });
 
   it('mounting the mineral-oil compressor delivered in the exam → wrong-oil', () => {

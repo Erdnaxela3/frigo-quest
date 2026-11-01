@@ -98,9 +98,19 @@ describe('L07', () => {
     expect(s.answers.cutOut).toBeUndefined();
   });
 
-  it('examen: KP5 cut-out above PS → hp-above-ps ends the exam', () => {
-    const s = run(start('examen', () => 0.3), [{ type: 'setPressostat', kp: 'kp5', range: 43 }]);
-    expect(ids(s)).toEqual(['hp-above-ps']);
+  it('examen: KP6 cut-out left at PS → hp-above-ps ends the exam', () => {
+    const s = run(start('examen', () => 0.3), [{ type: 'finish' }]);
+    expect(ids(s)).toContain('hp-above-ps');
     expect(s.finished?.completed).toBe(false);
+  });
+
+  it('examen: turning the KP6 down from 42 ¼ turn at a time is not a mistake', () => {
+    const s = run(start('examen', () => 0.3), [41.4, 40.8, 40.2, 39.6].map((range): Action => ({ type: 'setPressostat', kp: 'kp5', range })));
+    expect(ids(s)).toEqual([]);
+  });
+
+  it('examen: KP5 left above PS at the end → hp-above-ps', () => {
+    const s = run(start('examen', () => 0.3), [{ type: 'finish' }]);
+    expect(ids(s)).toContain('hp-above-ps');
   });
 });

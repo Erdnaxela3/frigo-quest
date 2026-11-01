@@ -65,7 +65,9 @@ Avant démarrage : vannes ouvertes (jamais de refoulement fermé), tension, rés
 
 Exemple : on veut une coupure BP à 0,5 bar et un enclenchement à 2,0 bar → RANGE = 2,0 bar, DIFF = 1,5 bar.
 
-- La plage du KP1 va d'environ −0,2 à 7,5 bar, le différentiel de 0,7 à 4 bar (à vérifier selon la référence exacte).
+- **KP1** (réarmement automatique) : plage −0,2 à 7,5 bar, différentiel 0,7 à 4 bar. Un tour de la tige RANGE ≈ 0,7 bar, un tour de la tige DIFF ≈ 0,15 à 0,2 bar.
+- **KP5** (réarmement automatique) : plage 8 à 32 bar, différentiel 1,8 à 6 bar. Un tour de la tige RANGE ≈ 2,3 bar. Pour le R410A ou le R32 (coupure HP vers 40 bar), on prend un **KP6** (8 à 42 bar).
+- Versions à **réarmement manuel** : différentiel **fixe** (0,7 bar sur le KP1, 3 bar sur le KP5, 4 bar sur le KP6). Le bouton RESET n'agit que lorsque la pression est revenue à coupure + différentiel (BP) ou coupure − différentiel (HP).
 - **L'échelle est indicative** : on vérifie toujours les valeurs réelles au manifold. Le jury du CAP mesure les vraies valeurs.
 - Un différentiel trop petit provoque des **courts cycles** (démarrages trop fréquents) qui usent le compresseur.
 - Le pressostat HP doit couper **en dessous de la pression maximale admissible PS** du côté HP. Le réarmement manuel est la règle pour une sécurité HP.
@@ -80,7 +82,7 @@ Utilise le cadran ci-dessous pour t'entraîner : règle l'enclenchement et le di
 - **Écart de condensation** typique d'un condenseur à air : environ 10 à 15 K entre l'air entrant et la température de condensation.
 - **Surface propre** (7.08) : un condenseur encrassé ou un ventilateur à l'arrêt fait monter la HP et la température de refoulement.
 - **Lignes** (7.05) : refoulement dimensionné pour entraîner l'huile ; ligne liquide sans perte de charge excessive (sinon flash gas avant le détendeur).
-- **Régulation de pression de condensation** (7.02) : en hiver, avec un condenseur à air extérieur, la HP chute et le détendeur n'a plus assez d'écart de pression pour alimenter l'évaporateur. On maintient la HP avec un régulateur de type **Danfoss KVR**, souvent associé à un **KVD** qui maintient la pression du réservoir (à vérifier sur le schéma constructeur), ou par variation de vitesse des ventilateurs.
+- **Régulation de pression de condensation** (7.02) : en hiver, avec un condenseur à air extérieur, la HP chute et le détendeur n'a plus assez d'écart de pression pour alimenter l'évaporateur. On maintient la HP avec un régulateur de type **Danfoss KVR** (plage 5 à 17,5 bar, réglage usine 10 bar), souvent associé à un **KVD** qui maintient la pression du réservoir, ou par variation de vitesse des ventilateurs.
 
 ### Incondensables (7.06)
 
@@ -113,7 +115,7 @@ Un évaporateur **pris en glace** ou un ventilateur d'évaporateur arrêté donn
 
 ### Régulateur de pression d'évaporation (8.02, 8.07)
 
-Le **Danfoss KVP** se monte en sortie d'évaporateur. Il **s'ouvre quand la pression amont monte** : il empêche la pression d'évaporation de descendre sous la consigne. Usage typique : deux chambres à températures différentes sur un même groupe ; la chambre « fruits et légumes » ne doit pas évaporer trop froid. On règle au manifold sur la prise de pression du régulateur, pas à l'échelle.`,
+Le **Danfoss KVP** se monte en sortie d'évaporateur. Il **s'ouvre quand la pression amont monte** : il empêche la pression d'évaporation de descendre sous la consigne. Plage de réglage 0 à 5,5 bar (réglage usine 2 bar). Usage typique : deux chambres à températures différentes sur un même groupe ; la chambre « fruits et légumes » ne doit pas évaporer trop froid. On règle au manifold sur la prise de pression du régulateur, pas à l'échelle.`,
     },
     {
       title: 'Détendeurs, filtre, voyant, électrovanne, séparateur d\'huile (groupe 9)',
@@ -121,17 +123,17 @@ Le **Danfoss KVP** se monte en sortie d'évaporateur. Il **s'ouvre quand la pres
 
 Il dose le liquide pour garder une **surchauffe** constante en sortie d'évaporateur. Le **bulbe** mesure la température de l'aspiration ; l'**égalisation de pression** (interne ou externe) lui donne la pression d'évaporation. L'égalisation externe sert quand la perte de charge de l'évaporateur ou du distributeur est importante.
 
-Exemple Danfoss **TE2** : corps pour un fluide donné, **orifice interchangeable** (tailles 00 à 06) choisi selon la puissance. Le code lettre du corps indique le fluide (par exemple N = R134a, S = R404A/R507, X = R22/R407C — à vérifier dans la documentation Danfoss, ainsi que le type compatible R449A).
+Exemple Danfoss **TE2** (T2 = égalisation interne) : élément thermostatique propre à un fluide (R22/R407C, R134a/R513A, R404A/R507, élément dédié R448A/R449A…), gravé sur le dessus de la membrane, et **orifice interchangeable** commun à tous les fluides (tailles 0X, 00, puis 01 à 06) choisi selon la puissance. Les anciennes désignations par lettre (TEX = R22, TEN = R134a, TES = R404A/R507) se rencontrent encore sur le terrain ; lis toujours le fluide gravé sur l'élément.
 
-- Bulbe sur l'aspiration **horizontale**, près de la sortie de l'évaporateur, **avant** le piquage d'égalisation, bien serré, **isolé**. Jamais en dessous du tube (l'huile y circule) : petits diamètres vers 1 h, gros diamètres vers 4 h (recommandation Danfoss, à vérifier).
-- Réglage : **sens horaire = surchauffe augmente** (le détendeur ferme), environ 4 K par tour sur un TE2. Par **quart de tour**, puis attendre 10 à 15 minutes la stabilisation. Cible courante : 5 à 8 K.
+- Bulbe sur l'aspiration **horizontale**, près de la sortie de l'évaporateur, **avant** le piquage d'égalisation, bien serré, **isolé**. Jamais en dessous du tube (l'huile y circule) : entre **1 h et 4 h** sur le tube, sur le dessus pour les petits diamètres (jusqu'à 7/8"), sur le côté vers 4 h pour les plus gros (recommandation Danfoss).
+- Réglage : **sens horaire = surchauffe augmente** (le détendeur ferme), environ **1 K par quart de tour** (≈ 4 K par tour) sur un TE2. Par **quart de tour**, puis attendre 10 à 15 minutes la stabilisation. Surchauffe statique d'usine : 4 K ; cible courante de surchauffe totale : 5 à 8 K.
 - Avant de remplacer : vérifier le voyant (charge), le contact du bulbe, chauffer le bulbe dans la main (aucune réaction de la BP = élément thermostatique mort).
 
 Le **détendeur électronique** (EEV) est piloté par un régulateur à partir d'un transmetteur de pression et d'une sonde de température ; il régule plus finement et accepte une HP plus basse en hiver.
 
 ### Filtre déshydrateur (9.08)
 
-Retient l'humidité et les particules. Pour les HFC/POE : tamis moléculaire (type **Danfoss DML**). **Flèche dans le sens du fluide**, bouchons retirés au dernier moment. Un **écart de température > 2 K** entre entrée et sortie signale un filtre colmaté (bulles après le filtre). On le remplace à chaque ouverture du circuit (bonne pratique).
+Retient l'humidité et les particules. Pour les HFC/POE : 100 % tamis moléculaire (type **Danfoss DML**). Le **DCL** (80 % tamis moléculaire, 20 % alumine activée qui fixe les acides) vise plutôt les huiles minérales ou alkylbenzène. **Flèche dans le sens du fluide**, bouchons retirés au dernier moment. Un **écart de température > 2 K** entre entrée et sortie signale un filtre colmaté (bulles après le filtre). On le remplace à chaque ouverture du circuit (bonne pratique).
 
 ### Voyant liquide (type SGN)
 
@@ -147,7 +149,7 @@ Monté sur le refoulement, il renvoie l'huile au carter par un flotteur. Utile s
 
 ### Thermostats et régulateurs (9.04, 9.05)
 
-Thermostat : consigne + différentiel sur la température de chambre. Régulateurs de pression (KVP, KVR, KVD) : réglage au manifold, tige dans le sens horaire = consigne plus haute (convention Danfoss, à vérifier selon le modèle).`,
+Thermostat : consigne + différentiel sur la température de chambre. Régulateurs de pression (KVP, KVR, KVD) : réglage au manifold ; la vis de réglage comprime le ressort, donc **sens horaire = consigne plus haute**. Un tour ≈ 0,45 bar sur un KVP 12–22, ≈ 2,5 bar sur un KVR 12–22 (≈ 1,5 bar sur les KVR 28–35).`,
     },
     {
       title: 'Diagnostic : la table des signatures',

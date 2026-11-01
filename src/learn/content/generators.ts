@@ -157,7 +157,7 @@ export const GENERATORS: QuestionGenerator[] = [
           unit: 'mois',
           explain: `${fr(kg)} × ${FLUIDS[f].gwp} / 1000 = ${fr(t)} t CO₂e (${band})${lds ? ', doublée avec un système de détection de fuites' : ''} : ${m} mois.`,
         }),
-        confidence: 'secondary',
+        confidence: 'ok',
       };
     },
   },

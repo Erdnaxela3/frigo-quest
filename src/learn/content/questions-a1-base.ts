@@ -68,23 +68,23 @@ export const QUESTIONS_A1_BASE: Question[] = [
     explain: "11 mars 2024 → 11 décembre 2025 → 1er janvier 2027 → 12 mars 2029.",
   },
   {
-    id: "q1-1.00-capacite", skills: ["A1:1.00", "A1:5.08"], type: "multi", confidence: "secondary",
+    id: "q1-1.00-capacite", skills: ["A1:1.00", "A1:5.08"], type: "multi", confidence: "ok",
     prompt: "Concernant l'attestation de capacité de l'entreprise, quelles affirmations sont exactes ?",
     choices: [
       "Elle est nécessaire pour acheter des fluides frigorigènes",
-      "Elle exige au moins un salarié titulaire d'une attestation d'aptitude valide",
+      "Chaque personne qui manipule les fluides pour l'entreprise doit détenir une attestation d'aptitude adaptée",
       "Elle est délivrée à vie",
       "Elle remplace l'attestation d'aptitude du technicien",
     ],
     answer: [0, 1],
-    explain: "L'attestation de capacité concerne l'entreprise (validité 5 ans) ; elle conditionne l'achat de fluide et suppose du personnel titulaire de l'attestation d'aptitude. Elle ne remplace pas l'aptitude individuelle.",
+    explain: "L'attestation de capacité concerne l'entreprise : une par établissement, valable 5 ans maximum (R. 543-99). Les distributeurs ne vendent du fluide qu'à ses titulaires. Elle exige que chaque personne qui manipule les fluides pour l'entreprise ait une attestation d'aptitude adaptée (R. 543-106). Elle ne remplace pas l'aptitude individuelle.",
   },
   {
-    id: "q1-1.00-deee", skills: ["A1:1.00", "A1:5.08"], type: "single", confidence: "secondary",
+    id: "q1-1.00-deee", skills: ["A1:1.00", "A1:5.08"], type: "single", confidence: "ok",
     prompt: "Un réfrigérateur ménager en fin de vie relève de quelle filière de collecte ?",
     choices: ["DEEE (déchets d'équipements électriques et électroniques)", "Ordures ménagères", "Ferraille, sans traitement particulier", "Déchets inertes du BTP"],
     answer: 0,
-    explain: "Les appareils frigorifiques usagés sont des DEEE : le fluide et l'huile doivent être récupérés par un opérateur habilité avant tout démantèlement.",
+    explain: "Les appareils frigorifiques usagés sont des DEEE (directive 2012/19/UE, citée à l'article 9 du règlement 2024/573). Le fluide et l'huile doivent être récupérés par un opérateur habilité avant tout démantèlement.",
   },
   {
     id: "q1-1.00-ecoconception", skills: ["A1:1.00"], type: "single", confidence: "secondary",
@@ -544,11 +544,11 @@ export const QUESTIONS_A1_BASE: Question[] = [
     explain: "Montréal 1987 → Kyoto 1997 → Paris 2015 → Kigali 2016 → F-Gas III 2024.",
   },
   {
-    id: "q1-2.01-quotas", skills: ["A1:2.01", "A1:1.00"], type: "single", confidence: "secondary",
+    id: "q1-2.01-quotas", skills: ["A1:2.01", "A1:1.00"], type: "single", confidence: "ok",
     prompt: "Selon F-Gas III, quel est l'horizon de la réduction des quotas de mise sur le marché des HFC dans l'UE ?",
     choices: ["Sortie complète des HFC en 2050", "Réduction de 10 % en 2050", "Aucun quota n'existe", "Interdiction totale dès 2025"],
     answer: 0,
-    explain: "Le système de quotas réduit progressivement les quantités de HFC mises sur le marché, jusqu'à zéro en 2050. Conséquence : prix en hausse et passage aux fluides à faible PRP.",
+    explain: "Le système de quotas réduit progressivement les quantités de HFC mises sur le marché (annexe VII du règlement 2024/573 : environ 43 Mt CO₂e par an en 2025-2026, 21,7 en 2027-2029), jusqu'à zéro à partir de 2050. Conséquence : prix en hausse et passage aux fluides à faible PRP.",
   },
 
   // ---- 2.02 PRP, PFAS ----
@@ -562,7 +562,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
       "Son pouvoir frigorifique",
     ],
     answer: 0,
-    explain: "Le PRP compare l'effet de serre d'1 kg de gaz à celui d'1 kg de CO₂ (PRP = 1) sur 100 ans. Les valeurs réglementaires françaises sont celles du 4e rapport du GIEC (ex. R410A = 2088).",
+    explain: "Le PRP compare l'effet de serre d'1 kg de gaz à celui d'1 kg de CO₂ (PRP = 1) sur 100 ans. Le règlement 2024/573 retient pour les HFC les valeurs du 4e rapport du GIEC (ex. R410A = 2088) ; pour les HFO, celles du 6e rapport.",
   },
   {
     id: "q1-2.02-plus-fort", skills: ["A1:2.02"], type: "single", confidence: "ok",
@@ -793,18 +793,18 @@ export const QUESTIONS_A1_BASE: Question[] = [
     explain: "Le rapport de mise en service garde la trace des essais (pression, durée, température), du vide obtenu et de la charge exacte : ces données servent de référence aux interventions futures.",
   },
   {
-    id: "q1-3.05-cerfa", skills: ["A1:3.05", "A1:4.09", "A1:5.07"], type: "single", confidence: "secondary",
+    id: "q1-3.05-cerfa", skills: ["A1:3.05", "A1:4.09", "A1:5.07"], type: "single", confidence: "ok",
     prompt: "En France, quel document est rempli lors de chaque intervention nécessitant la manipulation de fluide ?",
     choices: ["La fiche d'intervention (Cerfa 15497)", "Le bon de livraison du fluide", "Le carnet de santé du compresseur", "La déclaration d'impôts de l'entreprise"],
     answer: 0,
-    explain: "La fiche d'intervention Cerfa 15497 indique notamment l'opérateur, l'équipement, la nature de l'intervention et les quantités chargées ou récupérées. Le détenteur conserve une copie.",
+    explain: "La fiche d'intervention Cerfa 15497*04 (art. R. 543-82) indique notamment l'opérateur et son n° d'attestation de capacité, le détenteur, l'équipement, la nature de l'intervention, le contrôle d'étanchéité et les quantités chargées ou récupérées. Elle est signée par l'opérateur et par le détenteur, qui garde l'original.",
   },
   {
-    id: "q1-3.05-duree", skills: ["A1:3.05", "A1:4.09"], type: "single", confidence: "secondary",
+    id: "q1-3.05-duree", skills: ["A1:3.05", "A1:4.09"], type: "single", confidence: "ok",
     prompt: "Combien de temps faut-il conserver les fiches d'intervention et le registre des contrôles ?",
     choices: ["5 ans", "1 an", "6 mois", "Jusqu'à la fin de la garantie"],
     answer: 0,
-    explain: "Les documents d'intervention sont conservés au moins 5 ans par le détenteur et l'opérateur.",
+    explain: "Art. R. 543-82 : la fiche d'intervention est conservée au moins 5 ans, à partir de sa signature, par le détenteur et par l'opérateur. Le règlement 2024/573 (art. 7) impose aussi 5 ans pour les registres.",
   },
 
   // ---- 4.01 Points de fuite ----
@@ -850,7 +850,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
     explain: "Le registre indique la charge, le fluide, les fuites passées et les points déjà réparés : il oriente la recherche vers les zones à risque.",
   },
   {
-    id: "q1-4.02-infos", skills: ["A1:4.02"], type: "multi", confidence: "secondary",
+    id: "q1-4.02-infos", skills: ["A1:4.02"], type: "multi", confidence: "ok",
     prompt: "Quelles informations utiles trouve-t-on dans le registre d'un équipement ?",
     choices: [
       "Type et charge de fluide",
@@ -859,7 +859,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
       "Le salaire du technicien",
     ],
     answer: [0, 1, 2],
-    explain: "Le registre trace la charge, les contrôles, les fuites détectées, les réparations et les mouvements de fluide.",
+    explain: "Article 7 du règlement 2024/573 : type et quantité de fluide, quantités ajoutées et récupérées (avec l'origine recyclée ou régénérée), entreprise intervenante, dates et résultats des contrôles et des réparations. Il est conservé au moins 5 ans.",
   },
   {
     id: "q1-4.02-appoints", skills: ["A1:4.02", "A1:4.04"], type: "single", confidence: "ok",
@@ -911,7 +911,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
     explain: "Moins de fluide : moins de liquide au condenseur (SC faible, bulles au voyant), évaporateur sous-alimenté (SH élevée, BP basse). Un SC très élevé évoque plutôt une surcharge.",
   },
   {
-    id: "q1-4.04-suite", skills: ["A1:4.04", "A1:4.06", "A1:4.07"], type: "single", confidence: "secondary",
+    id: "q1-4.04-suite", skills: ["A1:4.04", "A1:4.06", "A1:4.07"], type: "single", confidence: "ok",
     prompt: "La méthode indirecte laisse penser qu'il y a une fuite. Que faire ensuite ?",
     choices: [
       "Localiser la fuite par une méthode directe, puis la réparer",
@@ -920,12 +920,12 @@ export const QUESTIONS_A1_BASE: Question[] = [
       "Remplacer le compresseur",
     ],
     answer: 0,
-    explain: "La méthode indirecte ne localise pas la fuite : on passe à une méthode directe (détecteur, produit moussant, traceur) puis on répare avant de recharger.",
+    explain: "La méthode indirecte ne localise pas la fuite : on passe à une méthode directe (détecteur, produit moussant, traceur) puis on répare. Recharger un équipement qui fuit est interdit (code de l'environnement, sanction de 5e classe).",
   },
 
   // ---- 4.05 Instruments portables ----
   {
-    id: "q1-4.05-verif", skills: ["A1:4.05", "A1:4.08"], type: "single", confidence: "secondary",
+    id: "q1-4.05-verif", skills: ["A1:4.05", "A1:4.08"], type: "single", confidence: "ok",
     prompt: "Quelle vérification faire sur un détecteur électronique de fuites ?",
     choices: [
       "Le contrôler régulièrement (au moins une fois par an) avec une fuite étalon",
@@ -934,7 +934,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
       "Le vérifier seulement s'il tombe en panne",
     ],
     answer: 0,
-    explain: "La sensibilité d'un détecteur dérive : on le vérifie au moins une fois par an (seuil courant de 5 g/an) et avant usage avec une fuite de référence.",
+    explain: "L'arrêté du 29 février 2016 (art. 2) impose une sensibilité d'au moins 5 g/an, vérifiée au moins une fois tous les 12 mois. On le teste aussi avant usage avec une fuite de référence. Son identification et la date de son contrôle figurent sur le Cerfa 15497.",
   },
   {
     id: "q1-4.05-thermometre", skills: ["A1:4.05", "A1:1.03"], type: "single", confidence: "ok",
@@ -1022,51 +1022,51 @@ export const QUESTIONS_A1_BASE: Question[] = [
 
   // ---- 4.09 Consignation, fréquences ----
   {
-    id: "q1-4.09-frequence", skills: ["A1:4.09", "A1:2.02"], type: "single", confidence: "secondary",
+    id: "q1-4.09-frequence", skills: ["A1:4.09", "A1:2.02"], type: "single", confidence: "ok",
     prompt: "Installation de 4,5 kg de R410A (PRP 2088), sans système de détection de fuites. Quelle est la périodicité du contrôle d'étanchéité ?",
     choices: ["12 mois", "6 mois", "3 mois", "Aucun contrôle obligatoire"],
     answer: 0,
     explain: "4,5 × 2088 / 1000 = 9,4 t CO₂e : entre 5 et 50 t, contrôle tous les 12 mois (24 mois avec système de détection).",
   },
   {
-    id: "q1-4.09-seuils", skills: ["A1:4.09"], type: "order", confidence: "secondary",
+    id: "q1-4.09-seuils", skills: ["A1:4.09"], type: "order", confidence: "ok",
     prompt: "Classez ces charges de HFC de la périodicité de contrôle la plus longue à la plus courte (sans système de détection).",
     choices: ["10 t CO₂e", "100 t CO₂e", "600 t CO₂e"],
-    explain: "Seuils F-Gas III : ≥ 5 t → 12 mois, ≥ 50 t → 6 mois, ≥ 500 t → 3 mois. Un système de détection de fuites double ces intervalles.",
+    explain: "Article 5 du règlement 2024/573 : ≥ 5 t → 12 mois, ≥ 50 t → 6 mois, ≥ 500 t → 3 mois. Un système de détection de fuites double ces intervalles.",
   },
   {
-    id: "q1-4.09-lds", skills: ["A1:4.09"], type: "numeric", confidence: "secondary",
+    id: "q1-4.09-lds", skills: ["A1:4.09"], type: "numeric", confidence: "ok",
     prompt: "Installation de 40 kg de R134a (PRP 1430) équipée d'un système de détection de fuites. Quelle est la périodicité du contrôle (mois) ?",
     answer: { value: 12, tol: 0 }, unit: "mois",
     explain: "40 × 1430 / 1000 = 57,2 t CO₂e : ≥ 50 t → 6 mois, doublé à 12 mois grâce au système de détection de fuites.",
   },
   {
-    id: "q1-4.09-sous-seuil", skills: ["A1:4.09", "A1:2.02"], type: "single", confidence: "secondary",
+    id: "q1-4.09-sous-seuil", skills: ["A1:4.09", "A1:2.02"], type: "single", confidence: "ok",
     prompt: "Un split non hermétique contient 7 kg de R32 (PRP 675). Le contrôle périodique d'étanchéité est-il obligatoire ?",
     choices: ["Non : 4,7 t CO₂e, sous le seuil de 5 t", "Oui, tous les 12 mois", "Oui, tous les 6 mois", "Oui, car le R32 est inflammable"],
     answer: 0,
     explain: "7 × 675 / 1000 = 4,7 t CO₂e < 5 t : pas de contrôle périodique F-Gas. Le seuil se calcule en t CO₂e, pas en kg.",
   },
   {
-    id: "q1-4.09-recontrole", skills: ["A1:4.09", "A1:4.06"], type: "single", confidence: "secondary",
+    id: "q1-4.09-recontrole", skills: ["A1:4.09", "A1:4.06"], type: "single", confidence: "ok",
     prompt: "Après la réparation d'une fuite, dans quel délai faut-il refaire un contrôle d'étanchéité ?",
     choices: ["Dans le mois qui suit la réparation", "Au prochain contrôle périodique", "Dans l'année", "Aucun contrôle n'est nécessaire"],
     answer: 0,
-    explain: "Un nouveau contrôle est fait dans le mois suivant la réparation pour vérifier son efficacité, et consigné dans le registre.",
+    explain: "Article 4 du règlement 2024/573 : le contrôle d'efficacité se fait au plus tôt après 24 h de fonctionnement et au plus tard un mois après la réparation. Il est consigné.",
   },
   {
-    id: "q1-4.09-etiquette", skills: ["A1:4.09"], type: "single", confidence: "secondary",
+    id: "q1-4.09-etiquette", skills: ["A1:4.09"], type: "single", confidence: "ok",
     prompt: "Une fuite a été détectée mais ne peut pas être réparée immédiatement. Quelle mention apposer sur l'équipement ?",
     choices: ["Un marquage « défaut d'étanchéité »", "Aucune, on note juste sur la facture", "Une étiquette « conforme »", "Le prochain rendez-vous commercial"],
     answer: 0,
-    explain: "En France, un équipement fuyard non réparé est signalé par un marquage « défaut d'étanchéité » ; un équipement contrôlé conforme porte une étiquette indiquant la date du prochain contrôle.",
+    explain: "Arrêté du 29 février 2016 : pastille rouge « défaut d'étanchéité » (disque d'au moins 4 cm), collée sur la pastille bleue de contrôle. Sous 4 jours ouvrés, il faut stopper la fuite, ou arrêter et vidanger l'équipement. Un équipement conforme porte la pastille bleue avec la date limite du contrôle.",
   },
   {
-    id: "q1-4.09-hermetique", skills: ["A1:4.09"], type: "single", confidence: "secondary",
+    id: "q1-4.09-hermetique", skills: ["A1:4.09"], type: "single", confidence: "ok",
     prompt: "Un équipement hermétiquement scellé et étiqueté contient 8 t CO₂e de HFC. Est-il soumis au contrôle périodique ?",
     choices: ["Non, les hermétiques de moins de 10 t CO₂e sont exemptés", "Oui, tous les 12 mois", "Oui, tous les 3 mois", "Oui, tous les mois"],
     answer: 0,
-    explain: "Les équipements hermétiquement scellés et étiquetés comme tels sont exemptés en dessous de 10 t CO₂e (au lieu de 5 t pour les autres).",
+    explain: "Article 5 du règlement 2024/573 : les équipements hermétiquement scellés et étiquetés comme tels sont exemptés sous 10 t CO₂e (au lieu de 5 t pour les autres), ou sous 2 kg pour les HFO. Dans les logements, l'exemption va jusqu'à 3 kg de gaz fluoré.",
   },
 
   // ---- 5.01 Manomètres ----
@@ -1272,11 +1272,11 @@ export const QUESTIONS_A1_BASE: Question[] = [
 
   // ---- 5.07 Consignation des quantités ----
   {
-    id: "q1-5.07-quantites", skills: ["A1:5.07"], type: "multi", confidence: "secondary",
+    id: "q1-5.07-quantites", skills: ["A1:5.07"], type: "multi", confidence: "ok",
     prompt: "Quelles quantités doivent figurer sur la fiche d'intervention ?",
     choices: ["Masse de fluide chargée", "Masse de fluide récupérée", "Nature du fluide chargé (neuf, recyclé ou régénéré)", "Prix du fluide au kilo"],
     answer: [0, 1, 2],
-    explain: "La fiche d'intervention trace les masses chargées et récupérées et l'origine du fluide chargé ; ces données alimentent le registre et les déclarations annuelles.",
+    explain: "Le Cerfa 15497*04 distingue la charge en fluide vierge, recyclé ou régénéré, et la récupération en fluide à traiter (avec le n° de BSFF) ou à réintroduire. Ces données alimentent le registre et les déclarations annuelles.",
   },
   {
     id: "q1-5.07-recup", skills: ["A1:5.07", "A1:5.03"], type: "numeric", confidence: "ok",
@@ -1299,7 +1299,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
     explain: "Le recyclage est un nettoyage de base ; la régénération est un retraitement industriel jusqu'à la qualité d'un fluide neuf. Ce qui ne peut être régénéré est détruit.",
   },
   {
-    id: "q1-5.08-filiere", skills: ["A1:5.08"], type: "single", confidence: "secondary",
+    id: "q1-5.08-filiere", skills: ["A1:5.08"], type: "single", confidence: "ok",
     prompt: "Que devient un fluide récupéré qui n'est pas réutilisé sur place ?",
     choices: [
       "Il est remis au distributeur ou à une filière agréée pour régénération ou destruction, avec traçabilité",
@@ -1308,7 +1308,7 @@ export const QUESTIONS_A1_BASE: Question[] = [
       "Il est revendu sur internet",
     ],
     answer: 0,
-    explain: "Les fluides récupérés sont des déchets suivis (en France sur Trackdéchets) : régénération ou destruction dans une installation autorisée.",
+    explain: "Le distributeur reprend sans frais le fluide récupéré, qui doit lui être remis au plus tard un an après l'intervention. Il part en régénération ou en destruction, suivi par un BSFF sur Trackdéchets (obligatoire depuis 2023).",
   },
   {
     id: "q1-5.08-transport", skills: ["A1:5.08", "A1:5.09"], type: "multi", confidence: "ok",

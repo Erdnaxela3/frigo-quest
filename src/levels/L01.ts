@@ -92,8 +92,9 @@ const L01: Level = {
   ],
 
   answers: [
-    { id: 'BP', label: 'BP', unit: 'bar', tol: 0.2, expected: (s) => toRel(cy(s).BP) },
-    { id: 'HP', label: 'HP', unit: 'bar', tol: 0.2, expected: (s) => toRel(cy(s).HP) },
+    { id: 'BP', label: 'BP', unit: 'bar rel', tol: 0.2, expected: (s) => toRel(cy(s).BP) },
+    // HP gauge flickers up to −0.65 bar (hose condensing at ambient); ±0.7 ≈ class 1 accuracy of a 50 bar gauge
+    { id: 'HP', label: 'HP', unit: 'bar rel', tol: 0.7, expected: (s) => toRel(cy(s).HP) },
     { id: 'Tevap', label: 'T évap', unit: '°C', tol: 1, expected: (s) => cy(s).Tevap },
     { id: 'Tcond', label: 'T cond', unit: '°C', tol: 1, expected: (s) => cy(s).Tcond },
     { id: 'SH', label: 'Surchauffe', unit: 'K', tol: 1, expected: (s) => cy(s).SH },

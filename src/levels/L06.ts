@@ -150,8 +150,8 @@ const L06: Level = {
     }
     if (a.id === 'record') {
       if (!s.bench.cylinder) refuse('Aucune charge à consigner.');
-      s.vars.recorded = Number(a.value);
-      return `Fiche d'intervention : ${picked(s)!.fluid} vierge, ${fr(Number(a.value), 3)} kg chargés`;
+      s.vars.recorded = Math.abs(Number(a.value));
+      return `Fiche d'intervention : ${picked(s)!.fluid} vierge, ${fr(s.vars.recorded, 3)} kg chargés`;
     }
   },
 
@@ -202,7 +202,8 @@ const L06: Level = {
     },
     {
       id: 'break', label: 'Casser le vide en liquide par la prise liquide (HP), unité arrêtée, jusqu\'à l\'équilibre des pressions',
-      done: (s) => !s.running && hpRoute(s) && !s.manifold.valves.lp && systemRef(s) > 0.3 && P(s, 'cyl') - P(s, 'filt') < 1,
+      // 1.5 bar: the last bar takes minutes to equalise, and once the unit runs this step can no longer be ticked
+      done: (s) => !s.running && hpRoute(s) && !s.manifold.valves.lp && systemRef(s) > 0.3 && P(s, 'cyl') - P(s, 'filt') < 1.5,
       hints: ['Le liquide entre côté HP, où il ne peut pas atteindre le compresseur. L\'électrovanne ouverte le laisse aussi passer vers la BP.',
         'Unité arrêtée, ouvrez la vanne HP du manifold (flexible rouge sur la prise liquide) et attendez que la HP rejoigne la pression de la bouteille.', ['port.liq']],
     },
@@ -210,13 +211,13 @@ const L06: Level = {
       id: 'start', label: 'Fermer la vanne HP du manifold et mettre l\'unité en marche',
       done: (s) => s.running && !s.manifold.valves.hp,
       hints: ['En marche, la HP dépasse la pression de la bouteille : vanne HP ouverte, le fluide repartirait vers la bouteille.',
-        'Fermez la vanne HP du manifold, puis mettez l\'unité en marche.'],
+        'Fermez la vanne HP du manifold, puis mettez l\'unité en marche. Si le pressostat BP coupe (charge encore faible), entrouvrez sans attendre la vanne BP.'],
     },
     {
       id: 'charge', label: 'Compléter par la BP, vanne BP à peine ouverte, et fermer la bouteille à la masse cible (± 2 %)',
       done: (s) => s.running && cylClosed(s) && Math.abs(charged(s) - target(s)) <= 0.02 * target(s),
       hints: ['Du liquide à pleine ouverture côté BP arrive en masse au compresseur (coup de liquide) : laminez.',
-        'Entrouvrez la vanne BP du manifold (10 à 20 %), surveillez la balance et fermez le robinet de la bouteille à la masse cible.'],
+        'Vanne BP du manifold sur « entrouverte (5 %) » (dès 30 % : coup de liquide), surveillez la balance en vitesse ×1 près de la cible et fermez le robinet de la bouteille à la masse cible.'],
     },
     {
       id: 'checks', label: 'Contrôler : voyant clair, sous-refroidissement et surchauffe',
@@ -235,12 +236,13 @@ const L06: Level = {
       id: 'close', label: 'Remettre bouchons et chapeaux, retirer l\'ouverture manuelle de l\'électrovanne',
       done: (s) => Object.values(s.caps).every(Boolean) && !s.valves.solenoid,
       hints: ['Ouverture manuelle laissée posée : l\'électrovanne ne fermera plus (pas de tirage au vide possible).',
-        'Remettez les bouchons des prises et le chapeau de la vanne gaz ; retirez l\'ouverture manuelle de l\'électrovanne.', ['comp.solenoid']],
+        'Remettez les bouchons des prises et le chapeau de la vanne gaz (outil main) ; retirez l\'ouverture manuelle de l\'électrovanne (clé sur l\'électrovanne).', ['comp.solenoid']],
     },
     {
       id: 'record', label: 'Consigner la masse chargée sur la fiche d\'intervention',
       done: (s) => typeof s.vars.recorded === 'number' && Math.abs(s.vars.recorded - charged(s)) <= 0.01,
-      hints: ['La masse chargée est celle lue sur la balance tarée.', 'Commande « Consigner la charge », saisissez la masse lue sur la balance.'],
+      hints: ['La masse chargée est celle lue sur la balance tarée (affichée en négatif : la bouteille s\'allège).',
+        'Commande « Consigner la charge », saisissez la masse lue sur la balance.'],
     },
   ],
 

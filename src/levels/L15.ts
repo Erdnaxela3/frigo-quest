@@ -29,14 +29,15 @@ const L15: Level = {
   scene: 'PLATINE',
   fluid: FLUID,
   briefing: 'La platine est montée ici en chambre positive « produits frais » (air de la chambre ≈ 4 °C), chargée au R449A, '
-    + 'avec un condenseur à air extérieur. Un régulateur de pression d\'évaporation (KVP) en sortie d\'évaporateur évite que la chambre '
-    + 'n\'évapore trop froid (produits desséchés, givre) ; un régulateur de pression de condensation (KVR) maintient la HP en hiver pour '
+    + 'avec un condenseur à air extérieur. Un régulateur de pression d\'évaporation (KVP) en sortie d\'évaporateur empêche '
+    + 'l\'évaporateur de descendre trop bas en température (produits desséchés, givre) ; un régulateur de pression de condensation (KVR) maintient la HP en hiver pour '
     + 'que le détendeur reste correctement alimenté. Réglez-les en lisant le manomètre raccordé à la bonne prise (évaporateur pour le KVP, '
-    + 'HP pour le KVR), jamais « à l\'échelle ». Le R449A a du glissement : évaporation en rosée, condensation en bulle.',
+    + 'HP pour le KVR), jamais « à l\'échelle ». Le R449A présente un glissement de température : lisez la température d\'évaporation en rosée '
+    + 'et la température de condensation en bulle. Les températures visées sont sur la « Fiche de réglage ».',
   tierNotes: {
     guide: 'Été (+30 °C), KVP seul. Consigne : T évap 0 °C rosée = 3,75 bar. La valeur de réglage est affichée sur le régulateur.',
     standard: 'Hiver (−5 °C) puis été (+30 °C) : KVR (Tcond ≥ 25 °C) et KVP (T évap ≈ 0 °C). Pas d\'échelle sur les régulateurs.',
-    examen: 'Saison, températures et consignes aléatoires ; le KVP a été déréglé, la chambre évapore trop froid. 30 min.',
+    examen: 'Saison, températures et consignes aléatoires ; le KVP a été déréglé, l\'évaporateur de la chambre est trop froid. 30 min.',
   },
   tools: ['hand', 'wrench', 'screwdriver', 'thermometer'],
   timeLimit: 30 * 60,
@@ -74,7 +75,7 @@ const L15: Level = {
       id: 'kvr', label: 'Mettre le KVR en service et le régler pour la Tcond minimale, vérifier au manomètre HP', tiers: ['standard', 'examen'],
       done: (s) => ok(s, 'kvrTarget') && !!s.vars.kvrOk,
       hints: ['Consigne KVR = pression de bulle à la Tcond minimale voulue.',
-        'Fermez le by-pass du KVR, clé sur le KVR : ¼ de tour horaire = +0,25 bar. Attendez la stabilisation, puis relevez la HP au manomètre.', ['comp.kvr', 'port.hp']],
+        'Fermez le by-pass du KVR, clé sur le KVR : ¼ de tour horaire ≈ +0,6 bar (≈ 2,5 bar par tour). Attendez la stabilisation, puis relevez la HP au manomètre.', ['comp.kvr', 'port.hp']],
     },
     {
       id: 'kvp', label: 'Régler le KVP pour la T évap visée, vérifier à la prise évaporateur',
@@ -121,7 +122,7 @@ const L15: Level = {
   rules: [
     {
       id: 'kvp-too-low', severity: 'major', skill: 'A1:8.02', lesson: 'composants',
-      message: 'La chambre produits frais évapore sous −2 °C : KVP réglé trop bas, les produits se dessèchent et l\'évaporateur givre.',
+      message: 'L\'évaporateur de la chambre produits frais est sous −2 °C : KVP réglé trop bas, les produits se dessèchent et l\'évaporateur givre.',
       when: ({ a, s }) => (a.type === 'finish' || (a.type === 'answer' && a.field === 'bpEvap'))
         && !!s.plant.kvp?.enabled && (s.cycle?.Tevap ?? 99) < -2,
     },
@@ -140,6 +141,10 @@ const L15: Level = {
   ],
 
   actions: [
+    {
+      id: 'targets',
+      label: (s) => `Fiche de réglage : T évap visée ${fmt(tevapT(s), 0)} °C (rosée)${s.tier === 'guide' ? '' : `, Tcond mini ${fmt(tcondT(s), 0)} °C (bulle)`}`,
+    },
     {
       id: 'season', visible: (s) => s.tier !== 'guide',
       label: (s) => (winter(s) ? `Passer en été (${fmt(seasonT(s, 'ete'), 0)} °C)` : `Passer en hiver (${fmt(seasonT(s, 'hiver'), 0)} °C)`),
@@ -164,6 +169,7 @@ const L15: Level = {
     if (a.type === 'answer') {
       if (a.field === 'hpWinter' && !(winter(s) && !s.plant.kvr?.enabled)) refuse('Relevé à faire en hiver, KVR by-passé.');
       if (a.field === 'hpSummer' && winter(s)) refuse('Relevé à faire en été.');
+      if (a.field === 'hpSummer' && !s.plant.kvr?.enabled) refuse('Mettez d\'abord le KVR en service (by-pass fermé) : c\'est lui qu\'on vérifie en été.');
       if (a.field === 'hpKvr') {
         if (!winter(s) || !s.plant.kvr?.enabled) refuse('Vérification à faire en hiver, KVR en service.');
         const checked = (s.vars.kvrChecked = onPort(s, 'port.hp', 'mf.hp'));
@@ -177,6 +183,10 @@ const L15: Level = {
       }
     }
     if (a.type !== 'custom') return;
+    if (a.id === 'targets') {
+      return `Fiche de réglage : chambre produits frais, T évap visée ${fmt(tevapT(s), 0)} °C (rosée, lue à la prise évaporateur)`
+        + (s.tier === 'guide' ? '.' : ` ; condensation : Tcond mini ${fmt(tcondT(s), 0)} °C (bulle, lue à la prise HP).`);
+    }
     if (a.id === 'season') {
       s.vars.season = winter(s) ? 'ete' : 'hiver';
       s.plant.Tamb = seasonT(s, s.vars.season as string);

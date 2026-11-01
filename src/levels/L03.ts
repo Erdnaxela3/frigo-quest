@@ -52,7 +52,10 @@ const L03: Level = {
 
   setup(tier: Tier, rng) {
     const T0 = tier === 'examen' ? Math.round(16 + 8 * rng()) : 20;
-    const s = makePlatine({ levelId: 'L03', tier, charge: 0, Tamb: T0, bench: { n2: { open: false, setpoint: P_ATM } } });
+    const s = makePlatine({
+      levelId: 'L03', tier, charge: 0, Tamb: T0, bench: { n2: { open: false, setpoint: P_ATM } },
+      nameplate: 'Plaque signalétique : R32 · charge 1,2 kg · PS HP 42 bar / BP 33 bar · 230 V 50 Hz',
+    });
     for (const id of SYSTEM_IDS) {
       const v = s.circuit.volumes[id];
       v.mAir = gasMass(P_ATM, v.V, 'air', T0);
@@ -69,6 +72,7 @@ const L03: Level = {
     ...(Object.keys(GASES) as (keyof typeof GASES)[]).map((g) => ({
       id: `gas-${g}`, label: `Installer la bouteille : ${GASES[g]}`, visible: (s: GameState) => s.vars.gas !== 'n2',
     })),
+    { id: 'solenoid', label: (s: GameState) => `${s.valves.solenoid ? 'Retirer' : 'Poser'} l'ouverture manuelle de l'électrovanne` },
     { id: 'direct', label: 'Ouvrir la bouteille sans détendeur (200 bar)', visible: (s: GameState) => s.vars.gas === 'n2' },
     { id: 'record', label: 'Consigner le test (fiche d\'intervention)', visible: (s: GameState) => !s.vars.recorded },
   ],
@@ -79,6 +83,10 @@ const L03: Level = {
         const g = a.id.slice(4) as keyof typeof GASES;
         s.vars.gas = g;
         return `Bouteille installée : ${GASES[g]}`;
+      }
+      if (a.id === 'solenoid') {
+        s.valves.solenoid = !s.valves.solenoid;
+        return `Électrovanne : ouverture manuelle ${s.valves.solenoid ? 'posée' : 'retirée'}`;
       }
       if (a.id === 'direct') return 'Bouteille ouverte directement sur le manifold, sans détendeur';
       if (a.id === 'record') {
@@ -109,7 +117,7 @@ const L03: Level = {
     s.circuit.ambient = s.plant.Tamb = ambient(s);
     const n2 = s.bench.n2!;
     const r = circuitRel(s);
-    if (r >= 4 && toRel(n2.setpoint) <= 11) s.vars.palier = true;
+    if (r >= 5 && toRel(n2.setpoint) <= 11) s.vars.palier = true;
     if (r >= STRENGTH - 1) s.vars.strengthHold = (num(s, 'strengthHold') || 0) + dt;
   },
 
@@ -129,7 +137,7 @@ const L03: Level = {
       id: 'open', label: 'Ouvrir l\'électrovanne (ouverture manuelle) et les vannes de service',
       done: (s) => s.valves.solenoid && s.valves.gas === 'mid' && s.valves.liquid === 'open',
       hints: ['Tout le circuit doit être testé : aucune vanne interne fermée.',
-        'Posez l\'ouverture manuelle de l\'électrovanne. Retirez le chapeau de la vanne gaz et mettez-la en position milieu.', ['comp.solenoid', 'valve.gas']],
+        'Bouton « Poser l\'ouverture manuelle de l\'électrovanne ». Outil main : retirez le chapeau de la vanne gaz, puis clé de vanne : position milieu.', ['comp.solenoid', 'valve.gas']],
     },
     {
       id: 'connect', label: 'Raccorder azote → détendeur → flexible jaune → manifold, bleu sur la BP, rouge sur la HP',
@@ -140,6 +148,7 @@ const L03: Level = {
     {
       id: 'palier', label: 'Monter en pression progressivement : premier palier à 5–10 bar rel',
       done: (s) => !!s.vars.palier,
+      tiers: ['guide', 'standard'],
       hints: ['Jamais la pleine pression d\'un coup : un palier bas permet de repérer une grosse fuite sans risque.',
         'Ouvrez les vannes BP et HP du manifold, réglez le détendeur à 10 bar rel, ouvrez la bouteille et contrôlez.'],
     },
@@ -169,7 +178,7 @@ const L03: Level = {
       id: 'verdict', label: 'Corriger la température et conclure',
       done: (s) => ok(s, 'P2c', 'verdict'),
       hints: ['P/T est constant en unités absolues (bar abs, kelvin).',
-        'P2 attendue (abs) = (P1 + 1,013) × (T2 + 273,15) / (T1 + 273,15) ; comparez avec P2 relevée.'],
+        'P2 attendue (abs) = (P1 + 1,013) × (T2 + 273,15) / (T1 + 273,15) ; retranchez 1,013 pour la saisir en bar rel et comparez avec P2 relevée.'],
     },
     {
       id: 'locate', label: 'Localiser la fuite au produit moussant (si fuite)',
@@ -190,11 +199,11 @@ const L03: Level = {
   ],
 
   answers: [
-    { id: 'P1', label: 'P1', unit: 'bar', tol: 0.2, expected: rel },
+    { id: 'P1', label: 'P1', unit: 'bar rel', tol: 0.2, expected: rel },
     { id: 'T1', label: 'T1', unit: '°C', tol: 0.5, expected: Tc },
-    { id: 'P2', label: 'P2', unit: 'bar', tol: 0.2, expected: rel },
+    { id: 'P2', label: 'P2', unit: 'bar rel', tol: 0.2, expected: rel },
     { id: 'T2', label: 'T2', unit: '°C', tol: 0.5, expected: Tc },
-    { id: 'P2c', label: 'P2 attendue (corrigée)', unit: 'bar', tol: 0.2, expected: (s) => (s.vars.P2 === undefined ? NaN : p2Expected(s)) },
+    { id: 'P2c', label: 'P2 attendue (corrigée)', unit: 'bar rel', tol: 0.2, expected: (s) => (s.vars.P2 === undefined ? NaN : p2Expected(s)) },
     { id: 'verdict', label: 'Conclusion', unit: '', tol: 0, expected: (s) => (leak(s) ? 1 : 0), choices: ['étanche', 'fuite'] },
   ],
 
@@ -245,6 +254,11 @@ const L03: Level = {
       },
     },
     {
+      id: 'no-palier', severity: 'minor', skill: 'A1:3.01', lesson: 'vide-pression',
+      message: 'Montée en pression sans palier : marquez un premier palier à 5–10 bar rel pour repérer une grosse fuite sans risque, puis montez progressivement.',
+      when: ({ s }) => !s.vars.palier && circuitRel(s) > 12,
+    },
+    {
       id: 'no-record', severity: 'minor', skill: 'A1:3.05', lesson: 'vide-pression',
       message: 'Test non consigné : pression, durée, températures et résultat doivent figurer sur la fiche d\'intervention.',
       when: ({ a, s }) => a.type === 'finish' && !s.vars.recorded,
@@ -258,7 +272,7 @@ const L03: Level = {
     const steps: Step[] = [
       { type: 'inspect', target: 'comp.compressor' },
       { type: 'custom', id: 'gas-n2' },
-      { type: 'toggleSolenoid' },
+      { type: 'custom', id: 'solenoid' },
       { type: 'toggleCap', target: 'valve.gas' },
       { type: 'setServiceValve', valve: 'valve.gas', pos: 'mid' },
       { type: 'toggleCap', target: 'port.lp' },

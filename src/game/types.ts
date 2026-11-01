@@ -37,7 +37,7 @@ export interface Bench {
   vacuumGaugeAt?: string; // circuit volume id the electronic vacuum gauge reads; undefined = no gauge
 }
 
-/** Danfoss KP. Values bar REL. KP1: range = cut-in, cut-out = range − diff. KP5: range = cut-out, cut-in = range − diff. */
+/** Danfoss KP. Values bar REL. KP1: range = cut-in, cut-out = range − diff. KP5/KP6 (HP): range = cut-out, cut-in = range − diff. */
 export interface Kp extends Pressostat {
   scaleError: number; // bar: the RANGE scale reads true + scaleError
   tripped: boolean; // contact open
@@ -109,7 +109,7 @@ export interface GameState {
   t: number; // sim seconds
   timeScale: 0 | 1 | 10 | 60;
   circuit: Circuit; // system volumes: hp, liq, lp, comp; + manifold, hose:<id>, optional cyl, level extras
-  unitOn: boolean; // command switch; the compressor may still be held off by KP1/KP5/thermostat
+  unitOn: boolean; // command switch; the compressor may still be held off by KP1/KP6/thermostat
   running: boolean; // compressor running
   cycle: CycleOutput | null; // relaxed running point; null when stopped AND during a pump-down transient
   starts: number[]; // sim s of every automatic or manual compressor start
@@ -236,6 +236,7 @@ export type Step = Action | ((s: GameState) => Action);
 
 export interface Level {
   id: string;
+  sandbox?: boolean; // free play: no objectives, scoring or progress
   title: string;
   skills: string[];
   lesson: string; // main lesson id

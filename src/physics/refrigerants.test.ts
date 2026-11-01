@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FLUID_IDS, leakCheckMonths, psat, pWater, rhoLiq, rhoVapSat, tco2e, toRel, tsat } from './refrigerants';
+import { FLUID_IDS, leakCheckFor, leakCheckMonths, psat, pWater, rhoLiq, rhoVapSat, tco2e, toRel, tsat } from './refrigerants';
 
 describe('refrigerants', () => {
   it('psat matches table points', () => {
@@ -53,5 +53,16 @@ describe('refrigerants', () => {
     expect(leakCheckMonths(600, true)).toBe(6);
     expect(leakCheckMonths(4)).toBeNull();
     expect(leakCheckMonths(8, false, true)).toBeNull();
+  });
+});
+
+describe('leakCheckFor', () => {
+  it('uses kg thresholds for HFOs and t CO₂e for HFCs', () => {
+    expect(leakCheckFor('R1234yf', 1.5)).toBe(12);
+    expect(leakCheckFor('R1234yf', 1.5, false, true)).toBeNull();
+    expect(leakCheckFor('R1234yf', 12, true)).toBe(12);
+    expect(leakCheckFor('R1234yf', 140)).toBe(3);
+    expect(leakCheckFor('R32', 1.2)).toBeNull(); // 0.81 t
+    expect(leakCheckFor('R410A', 3)).toBe(12); // 6.26 t
   });
 });

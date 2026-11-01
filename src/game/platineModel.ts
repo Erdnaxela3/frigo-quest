@@ -26,10 +26,10 @@ const COMP_SWEPT = 2; // m³/h, 3.5 kW R32 scroll
 const TAU_FAN = 10; // s, coil + fan heat exchange during a pump-down (TAU_T of circuit.ts is the still-air value)
 export const DT = 0.1; // s, fixed physics step
 /** ¼-turn of a pressostat spindle, bar. */
-export const KP_STEP = { kp1: { range: 0.15, diff: 0.1 }, kp5: { range: 0.5, diff: 0.2 } } as const;
-export const KP_LIMITS = { kp1: { range: [-0.2, 7.5], diff: [0.7, 4] }, kp5: { range: [8, 46], diff: [1.8, 6] } } as const;
+export const KP_STEP = { kp1: { range: 0.17, diff: 0.1 }, kp5: { range: 0.6, diff: 0.2 } } as const;
+export const KP_LIMITS = { kp1: { range: [-0.2, 7.5], diff: [0.7, 4] }, kp5: { range: [8, 42], diff: [4, 10] } } as const; // HP switch = KP6 (R32/R410A), id kept as kp5
 // simplification: Danfoss KVP 0–5.5 bar / KVR 5–17.5 bar ranges; bar per ¼ turn and "clockwise = higher" are to verify per model.
-export const REG_STEP = { kvp: 0.1, kvr: 0.25 } as const;
+export const REG_STEP = { kvp: 0.1, kvr: 0.6 } as const;
 export const REG_LIMITS = { kvp: [0, 5.5], kvr: [5, 17.5] } as const;
 
 const M_AIR = 28.96e-3, M_N2 = 28.013e-3;
@@ -153,11 +153,24 @@ function startCompressor(s: GameState) {
 function forceSystem(s: GameState) {
   const c = s.circuit, m = systemRef(s), cy = s.cycle!;
   const Th = tsat(s.fluid, cy.HP, 'bubble'), Tl = tsat(s.fluid, cy.BP, 'dew'), Ts = tsat(s.fluid, cy.BPsuction ?? cy.BP, 'dew');
+  const glide = fluidData(s.fluid).glide > 0.5;
   for (const id of SYSTEM_IDS) {
-    const v = c.volumes[id];
+    const v = c.volumes[id], hpSide = id === 'hp' || id === 'filt' || id === 'liq';
     v.mRef = m * RUN_SHARE[id];
-    v.T = v.Tdrive = id === 'hp' || id === 'filt' || id === 'liq' ? Th : id === 'comp' ? Ts : Tl;
+    v.T = v.Tdrive = hpSide ? Th : id === 'comp' ? Ts : Tl;
+    if (glide) v.T = v.Tdrive = matchPressure(s, id, hpSide ? cy.HP : id === 'comp' ? cy.BPsuction ?? cy.BP : cy.BP);
   }
+}
+
+// blends: a two-phase volume sits between dew and bubble, so find the temperature at which it shows the cycle pressure (secant)
+function matchPressure(s: GameState, id: string, target: number) {
+  const v = s.circuit.volumes[id], T0 = v.T, err = (T: number) => { v.T = T; return vs(s, id).Pref - target; };
+  let a = T0, b = T0 - 1, fa = err(a), fb = err(b);
+  for (let i = 0; i < 6 && Math.abs(fb) > 1e-3 && fb !== fa; i++) {
+    const c = Math.min(T0 + 2, Math.max(T0 - 12, b - (fb * (b - a)) / (fb - fa)));
+    a = b; fa = fb; b = c; fb = err(c);
+  }
+  return Math.abs(fb) < Math.abs(err(T0)) ? b : T0;
 }
 
 /** Solenoid open: manual opener, or powered (direct control: whenever the unit is on; pump-down control: thermostat calling). */
@@ -167,7 +180,9 @@ const thermoCall = (s: GameState) => s.plant.thermostat?.call ?? true;
 /** Liquid can reach the TXV: receiver valve, liquid valve and solenoid open. */
 export const liquidPathOpen = (s: GameState) => s.valves.receiver === 'open' && s.valves.liquid === 'open' && solenoidOpen(s);
 /** Compressor running on a closed path (pump-down) or a closed suction: static circuit + compressor transfer, no cycle. */
-export const transient = (s: GameState) => s.running && (!liquidPathOpen(s) || s.valves.gas === 'front');
+// below 30 % charge the cycle model is meaningless: the compressor just draws the suction down (KP1 short-cycling)
+const lowCharge = (s: GameState) => systemRef(s) < 0.3 * s.plant.nominalCharge;
+export const transient = (s: GameState) => s.running && (!liquidPathOpen(s) || s.valves.gas === 'front' || lowCharge(s));
 
 function enterTransient(s: GameState) {
   s.cycle = null;
@@ -178,8 +193,7 @@ function enterTransient(s: GameState) {
   if (comp.mRef > vap) { c.volumes.lp.mRef += comp.mRef - vap; comp.mRef = vap; }
 }
 
-// simplification: below 30 % charge the cycle model is meaningless; KP1 then reads the circuit as empty.
-const kpBP = (s: GameState) => (systemRef(s) < 0.3 * s.plant.nominalCharge ? -1 : toRel(P(s, 'comp')));
+const kpBP = (s: GameState) => toRel(P(s, 'comp'));
 const f1 = (x: number) => x.toFixed(1).replace('.', ',');
 
 /** Safety devices and thermostat → compressor start/stop. Returns a journal message. */
@@ -192,7 +206,7 @@ export function control(s: GameState): string | undefined {
   const want = s.unitOn && !s.elec.locked && !p.kp1.tripped && !p.kp5.tripped && (p.control === 'pumpDown' || thermoCall(s));
   if (s.running && !want) {
     stopCompressor(s);
-    if (p.kp5.tripped && !was5) return `Pressostat HP (KP5) : coupure à ${f1(hp)} bar${p.kp5.manualReset ? ', réarmement manuel nécessaire' : ''}.`;
+    if (p.kp5.tripped && !was5) return `Pressostat HP (KP6) : coupure à ${f1(hp)} bar${p.kp5.manualReset ? ', réarmement manuel nécessaire' : ''}.`;
     if (p.kp1.tripped) return `Pressostat BP (KP1) : coupure à ${f1(bp)} bar, le compresseur s'arrête.`;
     if (!thermoCall(s)) return `Thermostat : consigne atteinte (${f1(p.Troom)} °C), arrêt du compresseur.`;
     return undefined;
@@ -244,7 +258,8 @@ export function syncLinks(s: GameState) {
   const tr = transient(s);
   if (!s.running || tr) {
     if (!s.running) add('internal', 'hp', 'comp', K_INTERNAL, 1);
-    add('txv', 'liq', 'lp', K_TXV, solenoidOpen(s) ? 1 : 0, true);
+    // starved TXV: hardly any liquid reaches it on a low charge, it barely feeds
+    add('txv', 'liq', 'lp', K_TXV, solenoidOpen(s) ? (lowCharge(s) ? 0.03 : 1) : 0, true);
     add('valve.receiver', 'hp', 'filt', K, s.valves.receiver === 'open' ? 1 : 0, true, true);
     add('valve.liquid', 'filt', 'liq', K, s.valves.liquid === 'open' ? 1 : 0, true, true);
     // running, the suction line draws vapour off the evaporator
@@ -259,6 +274,12 @@ export function syncLinks(s: GameState) {
       const n = socketNode(s, sock);
       if (n) add(`${hv}:${end}`, hv, n.vol, n.k, gate * n.open, true, n.liquid);
     }
+  }
+  // an empty manifold port whose valve is open blows to air
+  for (const sock of ['mf.lp', 'mf.hp', 'mf.center', 'mf.vac'] as const) {
+    if (hoseAt(s, sock)) continue;
+    const n = socketNode(s, sock);
+    if (n && n.open > 0) add(`${sock}:atm`, 'manifold', ATM, n.k, n.open, true);
   }
   for (const l of s.leaks) add(`leak:${l.at}:${l.joint ?? ''}`, l.at, ATM, l.k, 1);
   const at = (sock: Socket) => { const h = hoseAt(s, sock); return h && hoseVol(h); };
@@ -316,7 +337,18 @@ export function physicsStep(s: GameState, h = DT): string | undefined {
     if (p.faults.evapFanOk) fanRelax(s, 'lp', p.Troom, h);
   }
   s.t += h;
-  return msg ?? fire;
+  return msg ?? fire ?? recoveryCutoff(s);
+}
+
+// one journal line when the station stops drawing; re-armed once its inlet pressure is back up
+function recoveryCutoff(s: GameState): string | undefined {
+  const rec = s.bench.recovery, h = hoseAt(s, 'rec.in');
+  if (!rec || !h) return;
+  const Pin = P(s, hoseVol(h));
+  if (!rec.on || Pin > rec.cutoff * 1.3) { delete s.vars._recCut; return; }
+  if (Pin > rec.cutoff * 1.05 || s.vars._recCut) return;
+  s.vars._recCut = true;
+  return `Station de récupération : pression de coupure atteinte (${f1(toRel(rec.cutoff))} bar), elle n'aspire plus.`;
 }
 
 // ---- Flammable refrigerant in the room (L13) ----
