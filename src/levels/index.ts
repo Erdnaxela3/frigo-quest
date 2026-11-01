@@ -11,8 +11,10 @@ import L09 from './L09';
 import L10 from './L10';
 import L11 from './L11';
 import L12 from './L12';
+import L13 from './L13';
 import L14 from './L14';
+import L15 from './L15';
 
-export const LEVELS: Level[] = [L01, L02, L03, L04, L05, L06, L07, L08, L09, L10, L11, L12, L14];
+export const LEVELS: Level[] = [L01, L02, L03, L04, L05, L06, L07, L08, L09, L10, L11, L12, L13, L14, L15];
 
 export const getLevel = (id: string | undefined) => LEVELS.find((l) => l.id === id);

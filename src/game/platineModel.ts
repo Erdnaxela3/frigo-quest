@@ -477,6 +477,7 @@ export function sceneView(s: GameState, highlight: TargetId[] = []): SceneView {
   for (const h of s.hoses) if (h.port && h.port.startsWith('port.')) hoses[h.port as PortId] = h.color;
   return {
     kvp: !!s.plant.kvp, kvr: !!s.plant.kvr,
+    fluid: s.fluid,
     title: `PLATINE DIDACTIQUE · ${s.fluid === 'R32' ? 'SPLIT ' : ''}${s.fluid} · ${kg(s.plant.nominalCharge)} kg`,
     running: s.running, segments, frost, sightGlass, hoses, highlight,
     valves: { 'valve.liquid': s.valves.liquid, 'valve.gas': s.valves.gas, 'valve.receiver': s.valves.receiver },

@@ -82,5 +82,6 @@ export interface SceneView {
   troom?: number; // thermostat display, °C
   kvp?: boolean; // draw the KVP (comp.kvp) on the suction line
   kvr?: boolean; // draw the KVR (comp.kvr) on the discharge line
+  fluid?: string; // compressor nameplate, default R32
   title?: string; // brass title plate, default 'PLATINE DIDACTIQUE · SPLIT R32 · 1,2 kg'
 }

@@ -119,7 +119,7 @@ export default function PlatineBoard({ view, onTarget, cursorTool }: PlatineBoar
           </Target>
           <Target id="comp.condFan"><Fan {...L.condFan} on={view.fans.cond} /></Target>
           <Target id="comp.evapFan"><Fan {...L.evapFan} on={view.fans.evap} /></Target>
-          <Target id="comp.compressor"><Compressor running={running} /></Target>
+          <Target id="comp.compressor"><Compressor running={running} fluid={view.fluid} /></Target>
           <Target id="comp.crankHeater"><CrankHeater on={!running} /></Target>
           <Target id="comp.receiver"><Receiver /></Target>
           <Target id="comp.filter"><Filter /></Target>

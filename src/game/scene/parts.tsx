@@ -85,7 +85,7 @@ export function Fan({ cx, cy, r, on }: { cx: number; cy: number; r: number; on: 
   );
 }
 
-export function Compressor({ running }: { running: boolean }) {
+export function Compressor({ running, fluid = 'R32' }: { running: boolean; fluid?: string }) {
   const { x, y, w, h } = L.compressor;
   const t = L.terminalBox;
   return (
@@ -99,8 +99,8 @@ export function Compressor({ running }: { running: boolean }) {
       <path d={`M${x + 22},${y + 12} Q${x + 14},${y + 60} ${x + 18},${y + h - 20}`} stroke="#fff" strokeOpacity={0.12} strokeWidth={8} fill="none" />
       <rect x={x + 30} y={y + 78} width={70} height={34} rx={2} fill="url(#pt-alu)" stroke="#555" />
       <text x={x + 65} y={y + 90} className="pt-tiny" textAnchor="middle" fontWeight={700}>SCROLL</text>
-      <text x={x + 65} y={y + 100} className="pt-tiny" textAnchor="middle">R32 · 230 V</text>
-      <text x={x + 65} y={y + 108} className="pt-tiny" textAnchor="middle">POE 0,4 L</text>
+      <text x={x + 65} y={y + 100} className="pt-tiny" textAnchor="middle">{fluid} · 230 V</text>
+      <text x={x + 65} y={y + 108} className="pt-tiny" textAnchor="middle">{fluid === 'R290' ? 'PAO' : 'POE'} 0,4 L</text>
       <rect x={t.x} y={t.y} width={t.w} height={t.h} rx={3} fill="#575d63" stroke="#2a2d30" />
       <circle cx={t.x + t.w / 2} cy={t.y + 9} r={2} fill="#aaa" />
       <circle cx={t.x + t.w / 2} cy={t.y + t.h - 9} r={2} fill="#aaa" />
